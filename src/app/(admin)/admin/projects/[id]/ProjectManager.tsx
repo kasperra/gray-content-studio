@@ -169,6 +169,12 @@ export function ProjectManager({
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <span className="font-medium text-[0.95rem]">{d.title}</span>
                     <div className="flex items-center gap-2">
+                      <a
+                        href={`/review/${d.id}`}
+                        className="rounded border border-accent/50 text-accent text-[0.78rem] px-3 py-1 hover:bg-accent hover:text-bg transition-colors"
+                      >
+                        Review Room
+                      </a>
                       <select
                         value={d.status}
                         disabled={pending}

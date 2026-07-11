@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/admin", "/portal"];
+const PROTECTED_PREFIXES = ["/admin", "/portal", "/review"];
 
 export default async function proxy(request: NextRequest) {
   const needsAuth = PROTECTED_PREFIXES.some((p) => request.nextUrl.pathname.startsWith(p));
@@ -51,5 +51,5 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/portal/:path*", "/login"],
+  matcher: ["/admin/:path*", "/portal/:path*", "/review/:path*", "/login"],
 };

@@ -8,6 +8,7 @@ type Deliverable = {
   title: string;
   status: "pending" | "in_review" | "approved" | "delivered";
   storagePath: string | null;
+  hasReview?: boolean;
 };
 
 const statusStyle: Record<Deliverable["status"], string> = {
@@ -57,6 +58,14 @@ export function DeliverableList({ deliverables }: { deliverables: Deliverable[] 
             <span className={`rounded-full border px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.1em] ${statusStyle[d.status]}`}>
               {statusLabel[d.status]}
             </span>
+            {d.hasReview && (
+              <a
+                href={`/review/${d.id}`}
+                className="rounded-full border border-accent/50 text-accent text-[0.75rem] font-semibold uppercase tracking-[0.08em] px-4 py-1.5 hover:bg-accent hover:text-bg transition-colors"
+              >
+                Review & Comment
+              </a>
+            )}
             {d.storagePath && (
               <button
                 onClick={() => download(d)}

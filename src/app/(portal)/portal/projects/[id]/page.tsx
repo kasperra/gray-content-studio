@@ -23,7 +23,11 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
   if (!project) notFound();
 
   const [{ data: deliverables }, { data: activities }] = await Promise.all([
-    supabase.from("deliverables").select("id, title, status, storage_path").eq("project_id", id).order("created_at", { ascending: false }),
+    supabase
+      .from("deliverables")
+      .select("id, title, status, storage_path, review_versions(id)")
+      .eq("project_id", id)
+      .order("created_at", { ascending: false }),
     supabase.from("activities").select("body, created_at").eq("project_id", id).order("created_at", { ascending: false }).limit(15),
   ]);
 
@@ -80,6 +84,7 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
                 title: d.title,
                 status: d.status,
                 storagePath: d.storage_path,
+                hasReview: ((d.review_versions as unknown as { id: string }[]) ?? []).length > 0,
               }))}
             />
           </section>
