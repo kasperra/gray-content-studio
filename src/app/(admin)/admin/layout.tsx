@@ -10,10 +10,11 @@ export const metadata: Metadata = {
 };
 
 const tabs = [
-  { href: "/admin", label: "Leads" },
+  { href: "/admin", label: "Dashboard" },
+  { href: "/admin/crm", label: "CRM" },
   { href: "/admin/clients", label: "Clients" },
   { href: "/admin/proposals", label: "Proposals" },
-  { href: "/admin/proposals/new", label: "New Proposal" },
+  { href: "/admin/invoices", label: "Invoices" },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
