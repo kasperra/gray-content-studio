@@ -39,10 +39,20 @@ export default async function PortalPage() {
       </header>
 
       <div className="w-[min(1200px,92vw)] mx-auto py-14">
-        <p className="text-[0.78rem] font-medium uppercase tracking-[0.32em] text-accent">Client Portal</p>
-        <h1 className="font-display font-semibold text-[clamp(1.9rem,4.5vw,3rem)] mt-2">
-          Welcome{session.name ? `, ${session.name.split(" ")[0]}` : ""}
-        </h1>
+        <div className="flex items-end justify-between gap-4 flex-wrap">
+          <div>
+            <p className="text-[0.78rem] font-medium uppercase tracking-[0.32em] text-accent">Client Portal</p>
+            <h1 className="font-display font-semibold text-[clamp(1.9rem,4.5vw,3rem)] mt-2">
+              Welcome{session.name ? `, ${session.name.split(" ")[0]}` : ""}
+            </h1>
+          </div>
+          <Link
+            href="/portal/assets"
+            className="rounded-full border border-accent/50 text-accent font-semibold uppercase text-[0.8rem] tracking-[0.08em] px-5 py-2.5 hover:bg-accent hover:text-bg transition-colors"
+          >
+            Asset Library →
+          </Link>
+        </div>
 
         <div className="grid lg:grid-cols-[1.5fr_1fr] gap-8 mt-10 items-start">
           <section>
