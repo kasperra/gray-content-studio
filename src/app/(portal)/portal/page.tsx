@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { Wordmark } from "@/components/Nav";
+import { STAGES, stageIndex, stageLabel } from "@/modules/projects/stages";
 import { SignOutButton } from "./SignOutButton";
 
 export const metadata: Metadata = {
@@ -10,27 +11,15 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/* Phase 2 modules land here — this shell gives clients a real login destination on day one. */
-const UPCOMING = [
-  { title: "Projects & Timeline", text: "Live production status for every project." },
-  { title: "Deliverables & Downloads", text: "Review cuts and download final masters." },
-  { title: "Proposals & Invoices", text: "Everything commercial, in one place." },
-  { title: "Asset Library", text: "Your brand's videos, photos, and files — searchable." },
-];
-
 export default async function PortalPage() {
   const session = await requireUser();
   const supabase = await createSupabaseServer();
 
-  let projects: { id: string; title: string; stage: string }[] = [];
-  if (session.clientId) {
-    const { data } = await supabase
-      .from("projects")
-      .select("id, title, stage")
-      .order("created_at", { ascending: false })
-      .limit(10);
-    projects = data ?? [];
-  }
+  const [{ data: projects }, { data: activities }, { data: invoices }] = await Promise.all([
+    supabase.from("projects").select("id, title, stage, due_date").order("created_at", { ascending: false }),
+    supabase.from("activities").select("body, created_at").order("created_at", { ascending: false }).limit(8),
+    supabase.from("invoices").select("number, amount, status, due_date").order("created_at", { ascending: false }).limit(10),
+  ]);
 
   return (
     <main className="min-h-svh">
@@ -55,40 +44,85 @@ export default async function PortalPage() {
           Welcome{session.name ? `, ${session.name.split(" ")[0]}` : ""}
         </h1>
 
-        {projects.length > 0 ? (
-          <section className="mt-10">
+        <div className="grid lg:grid-cols-[1.5fr_1fr] gap-8 mt-10 items-start">
+          <section>
             <h2 className="font-display text-[1.3rem] font-semibold mb-4">Your Projects</h2>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {projects.map((p) => (
-                <div key={p.id} className="bg-surface border border-rule rounded-lg p-6">
-                  <span className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-accent">
-                    {p.stage.replace(/_/g, " ")}
-                  </span>
-                  <p className="font-display text-[1.15rem] font-semibold mt-1.5">{p.title}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        ) : (
-          <p className="text-muted mt-4 max-w-136">
-            Your workspace is ready. As your projects kick off, production status, deliverables,
-            and documents will appear here.
-          </p>
-        )}
-
-        <section className="mt-12">
-          <h2 className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-muted mb-4">
-            Coming to your portal
-          </h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {UPCOMING.map((m) => (
-              <div key={m.title} className="border border-rule border-dashed rounded-lg p-6 opacity-70">
-                <p className="font-display text-[1.05rem] font-semibold">{m.title}</p>
-                <p className="text-muted text-[0.85rem] mt-1.5">{m.text}</p>
+            {!projects?.length ? (
+              <p className="text-muted max-w-136">
+                Your workspace is ready. As your projects kick off, production status, deliverables,
+                and documents will appear here.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {projects.map((p) => {
+                  const idx = stageIndex(p.stage);
+                  const pct = Math.round((idx / (STAGES.length - 1)) * 100);
+                  return (
+                    <Link
+                      key={p.id}
+                      href={`/portal/projects/${p.id}`}
+                      className="block bg-surface border border-rule rounded-lg p-6 hover:border-accent/60 transition-colors"
+                    >
+                      <div className="flex items-center justify-between gap-4 flex-wrap">
+                        <p className="font-display text-[1.2rem] font-semibold">{p.title}</p>
+                        <span className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-accent">
+                          {stageLabel(p.stage)}
+                        </span>
+                      </div>
+                      <div className="mt-4 h-1.5 rounded-full bg-bg overflow-hidden" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${p.title} progress`}>
+                        <div className="h-full bg-accent rounded-full transition-all" style={{ width: `${Math.max(pct, 4)}%` }} />
+                      </div>
+                      <div className="flex justify-between mt-2 text-[0.78rem] text-muted">
+                        <span>{pct}% through production</span>
+                        {p.due_date && <span>Due {p.due_date}</span>}
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
-            ))}
+            )}
+          </section>
+
+          <div className="space-y-6">
+            <section className="bg-surface border border-rule rounded-lg p-6">
+              <h2 className="font-display text-[1.15rem] font-semibold mb-4">Recent Updates</h2>
+              {!activities?.length ? (
+                <p className="text-muted text-[0.88rem]">Updates about your projects will appear here.</p>
+              ) : (
+                <ul className="space-y-2.5">
+                  {activities.map((a, i) => (
+                    <li key={i} className="text-[0.86rem] text-muted flex gap-3">
+                      <span className="text-accent shrink-0">·</span>
+                      <span>
+                        {a.body}
+                        <span className="block text-[0.73rem] opacity-70">
+                          {new Date(a.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            {invoices && invoices.length > 0 && (
+              <section className="bg-surface border border-rule rounded-lg p-6">
+                <h2 className="font-display text-[1.15rem] font-semibold mb-4">Invoices</h2>
+                <ul className="space-y-2 text-[0.88rem]">
+                  {invoices.map((inv, i) => (
+                    <li key={i} className="flex justify-between gap-3">
+                      <span>{inv.number}</span>
+                      <span className="text-muted">
+                        ${Number(inv.amount).toLocaleString()} ·{" "}
+                        <span className={inv.status === "paid" ? "text-[#8ec98e]" : ""}>{inv.status}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
           </div>
-        </section>
+        </div>
       </div>
     </main>
   );

@@ -1,7 +1,9 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { setLeadStatus } from "@/modules/proposals/actions";
+import { convertLeadToClient } from "@/modules/clients/actions";
 
 type Lead = {
   id: string;
@@ -25,6 +27,7 @@ const statusColor: Record<Lead["status"], string> = {
 };
 
 export function LeadRow({ lead }: { lead: Lead }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
 
   return (
@@ -58,13 +61,25 @@ export function LeadRow({ lead }: { lead: Lead }) {
           <a href={`mailto:${lead.email}`} className="text-accent hover:underline">{lead.email}</a>
         </p>
         {lead.message && <p className="text-muted whitespace-pre-wrap">{lead.message}</p>}
-        <p>
+        <p className="flex flex-wrap gap-x-6 gap-y-1">
           <a
             href={`/admin/proposals/new?name=${encodeURIComponent(lead.name)}&company=${encodeURIComponent(lead.company ?? "")}&email=${encodeURIComponent(lead.email)}`}
             className="text-accent text-[0.85rem] font-semibold hover:underline underline-offset-4"
           >
-            Create proposal for this lead →
+            Create proposal →
           </a>
+          <button
+            disabled={pending}
+            onClick={() =>
+              startTransition(async () => {
+                const res = await convertLeadToClient(lead.id);
+                if (res.ok && res.clientId) router.push(`/admin/clients/${res.clientId}`);
+              })
+            }
+            className="text-accent text-[0.85rem] font-semibold hover:underline underline-offset-4 cursor-pointer disabled:opacity-60"
+          >
+            Convert to client →
+          </button>
         </p>
       </div>
     </details>
