@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+/* Gray Content Studio design tokens — ported from the original static site */
+@theme {
+  --color-bg: #0b0b0c;
+  --color-surface: #141416;
+  --color-surface-2: #1b1b1e;
+  --color-ink: #f5f2ec;
+  --color-muted: #9b968e;
+  --color-accent: #d4a24e;
+  --color-accent-soft: rgba(212, 162, 78, 0.14);
+  --color-rule: rgba(245, 242, 236, 0.12);
+
+  --font-display: var(--font-fraunces), serif;
+  --font-body: var(--font-inter), sans-serif;
+
+  --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-kenburns: kenburns 26s cubic-bezier(0.22, 1, 0.36, 1) infinite alternate;
+  --animate-marquee: marquee 42s linear infinite;
+  --animate-cardpan: cardpan 26s ease-in-out infinite alternate;
+
+  @keyframes kenburns {
+    from {
+      transform: scale(1) translateX(0);
+    }
+    to {
+      transform: scale(1.12) translateX(-2%);
+    }
+  }
+
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @keyframes cardpan {
+    from {
+      transform: scale(1.02) translate(0, 0);
+    }
+    to {
+      transform: scale(1.08) translate(-1.5%, 1%);
+    }
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 76px;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+/* Scroll reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.8s var(--ease-out-expo),
+    transform 0.8s var(--ease-out-expo);
+  transition-delay: var(--reveal-delay, 0s);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .animate-kenburns,
+  .animate-marquee,
+  .animate-cardpan {
+    animation: none !important;
+  }
+}
+
+/* Print styles for proposal pages */
+@media print {
+  body {
+    background: #fff;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

@@ -1,8 +1,10 @@
-/* Gray Content Studio — service pricing
-   Source: "Pricing strategy.xlsx" (Estimator sheet).
-   Unit prices editable in the admin panel (overrides persist in browser storage). */
+/* Service rate card — source: "Pricing strategy.xlsx" (Estimator sheet).
+   Ported from the static site's js/pricing-data.js. */
 
-const PRICING_CATEGORIES = [
+export type Service = { id: string; name: string; unit: string; price: number };
+export type Category = { id: string; name: string; services: Service[] };
+
+export const PRICING_CATEGORIES: Category[] = [
   {
     id: "preprod",
     name: "Pre-Production & Strategy",
@@ -129,27 +131,29 @@ const PRICING_CATEGORIES = [
   },
 ];
 
-/* Percentage surcharges applied to the services subtotal (mutually exclusive) */
-const RUSH_OPTIONS = [
+export const RUSH_OPTIONS = [
   { id: "none", name: "Standard Delivery", pct: 0 },
   { id: "rush48", name: "Rush Delivery (48 Hours)", pct: 30 },
   { id: "sameday", name: "Same-Day Delivery", pct: 50 },
-];
+] as const;
 
-/* Travel: $0.75/mile, first 25 miles free */
-const TRAVEL_RATE = 0.75;
-const TRAVEL_FREE_MILES = 25;
+export type RushId = (typeof RUSH_OPTIONS)[number]["id"];
 
-const DEFAULT_DEPOSIT_PCT = 50;
+export const TRAVEL_RATE = 0.75;
+export const TRAVEL_FREE_MILES = 25;
+export const DEFAULT_DEPOSIT_PCT = 50;
 
-function money(n) {
-  return "$" + Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function findService(id) {
+export function findService(id: string): Service | undefined {
   for (const cat of PRICING_CATEGORIES) {
     const s = cat.services.find((s) => s.id === id);
     if (s) return s;
   }
-  return null;
+  return undefined;
+}
+
+export function money(n: number): string {
+  return (
+    "$" +
+    Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  );
 }
