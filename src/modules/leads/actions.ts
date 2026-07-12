@@ -1,6 +1,11 @@
 "use server";
 
 import { createSupabaseAdmin, supabaseConfigured } from "@/lib/supabase/server";
+import {
+  parseDraft,
+  estimateFromDraft,
+  summarizeEstimate,
+} from "@/modules/pricing/estimate-link";
 
 export type LeadFormState = { ok: boolean; message: string } | null;
 
@@ -19,10 +24,18 @@ export async function submitLead(
   const email = String(formData.get("email") ?? "").trim();
   const company = String(formData.get("company") ?? "").trim();
   const projectType = String(formData.get("project_type") ?? "").trim();
-  const message = String(formData.get("message") ?? "").trim();
+  let message = String(formData.get("message") ?? "").trim();
 
   if (!name || !email || !projectType) {
     return { ok: false, message: "Please fill in your name, email, and project type." };
+  }
+
+  // Estimate handed off from the pricing calculator — validate the draft and
+  // recompute all totals server-side from the canonical rate card.
+  const draft = parseDraft(String(formData.get("estimate") ?? ""));
+  const estimate = draft ? estimateFromDraft(draft) : null;
+  if (estimate && estimate.items.length > 0) {
+    message = [message, summarizeEstimate(estimate)].filter(Boolean).join("\n\n");
   }
 
   let dbOk = false;
@@ -32,14 +45,21 @@ export async function submitLead(
   if (supabaseConfigured() && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     try {
       const admin = createSupabaseAdmin();
-      const { error } = await admin.from("leads").insert({
+      const row = {
         name,
         email,
         company: company || null,
         project_type: projectType,
         message: message || null,
-        source: "website",
-      });
+        source: estimate ? "pricing_calculator" : "website",
+        estimate: estimate && estimate.items.length > 0 ? estimate : null,
+      };
+      let { error } = await admin.from("leads").insert(row);
+      if (error && estimate) {
+        // Fallback if the 0002 migration (estimate column) isn't applied yet —
+        // the summary is still preserved inside `message`.
+        ({ error } = await admin.from("leads").insert({ ...row, estimate: undefined }));
+      }
       dbOk = !error;
     } catch {
       dbOk = false;

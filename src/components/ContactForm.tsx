@@ -1,7 +1,14 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { submitLead, type LeadFormState } from "@/modules/leads/actions";
+import {
+  loadDraft,
+  clearDraft,
+  estimateFromDraft,
+  type EstimateDraft,
+} from "@/modules/pricing/estimate-link";
+import { money } from "@/modules/pricing/data";
 
 const fieldCls =
   "w-full font-body text-base text-ink bg-surface border border-rule rounded px-4 py-[0.85em] focus:outline-none focus:border-accent transition-colors";
@@ -9,12 +16,56 @@ const labelCls = "text-[0.78rem] font-medium uppercase tracking-[0.14em] text-mu
 
 export function ContactForm() {
   const [state, formAction, pending] = useActionState<LeadFormState, FormData>(submitLead, null);
+  const [draft, setDraft] = useState<EstimateDraft | null>(null);
+
+  // Pick up an estimate handed off from the pricing calculator
+  useEffect(() => {
+    setDraft(loadDraft());
+  }, []);
+
+  // Clear the stored draft once the inquiry goes through
+  useEffect(() => {
+    if (state?.ok) {
+      clearDraft();
+      setDraft(null);
+    }
+  }, [state]);
+
+  const estimate = draft ? estimateFromDraft(draft) : null;
 
   return (
     <form action={formAction} className="grid gap-5">
       <p className="text-[0.82rem] font-medium tracking-[0.04em] text-accent">
         Trusted by ExxonMobil, Anthem, iHeartRadio, and more
       </p>
+
+      {estimate && estimate.items.length > 0 && (
+        <div className="flex items-center justify-between gap-4 bg-accent-soft border border-accent/40 rounded-md px-4 py-3">
+          <p className="text-[0.88rem]">
+            <span className="font-semibold text-accent">Estimate attached</span>
+            <span className="text-ink/85">
+              {" "}
+              · {estimate.items.length} service{estimate.items.length === 1 ? "" : "s"} ·{" "}
+              {money(estimate.total)}
+            </span>
+            <span className="block text-muted text-[0.78rem] mt-0.5">
+              Sent with your inquiry so we can quote precisely.
+            </span>
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              clearDraft();
+              setDraft(null);
+            }}
+            aria-label="Remove attached estimate"
+            className="shrink-0 rounded-full border border-rule w-8 h-8 text-muted hover:text-[#d98a7a] hover:border-[#d98a7a] transition-colors cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       <div className="grid sm:grid-cols-2 gap-5">
         <div className="grid gap-1.5">
           <label htmlFor="f-name" className={labelCls}>Name</label>
@@ -51,10 +102,15 @@ export function ContactForm() {
           id="f-details"
           name="message"
           rows={4}
-          placeholder="What are we making? Timeline, goals, references — anything helps."
+          placeholder={
+            estimate
+              ? "Anything beyond the attached estimate? Timeline, goals, references…"
+              : "What are we making? Timeline, goals, references — anything helps."
+          }
           className={`${fieldCls} resize-y min-h-[110px]`}
         />
       </div>
+      {draft && <input type="hidden" name="estimate" value={JSON.stringify(draft)} />}
       <input type="text" name="_gotcha" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px] w-px h-px overflow-hidden" />
       <p role="status" aria-live="polite" className={`text-[0.95rem] min-h-[1.4em] ${state ? (state.ok ? "text-[#8ec98e]" : "text-[#d98a7a]") : ""}`}>
         {pending ? "Sending…" : state?.message ?? ""}

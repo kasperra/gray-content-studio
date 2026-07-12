@@ -33,6 +33,7 @@ export default async function CrmPage() {
           status: l.status,
           clientId: l.client_id,
           createdAt: l.created_at,
+          estimateTotal: (l.estimate as { total?: number } | null)?.total ?? null,
           notes: notesByLead[l.id] ?? [],
         }))}
       />

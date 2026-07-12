@@ -26,12 +26,24 @@ const fieldCls =
   "w-full font-body text-[0.95rem] text-ink bg-bg border border-rule rounded px-3.5 py-2.5 focus:outline-none focus:border-accent transition-colors";
 const labelCls = "text-[0.72rem] font-medium uppercase tracking-[0.14em] text-muted";
 
+export type FromLead = {
+  leadId: string;
+  clientName: string;
+  company: string;
+  email: string;
+  items: { id: string; qty: number }[];
+  rushId: string;
+  travelMiles: number;
+};
+
 export function ProposalBuilder({
   loaded,
   prefill,
+  fromLead,
 }: {
   loaded?: LoadedProposal;
   prefill: { clientName: string; company: string; email: string };
+  fromLead?: FromLead;
 }) {
   const [details, setDetails] = useState<ProposalDetails>({
     clientName: loaded?.clientName ?? prefill.clientName,
@@ -43,15 +55,25 @@ export function ProposalBuilder({
   });
 
   const [state, setState] = useState<BuilderState>(() => {
-    if (!loaded) return emptyBuilderState();
-    return {
-      selections: Object.fromEntries(loaded.items.map((i) => [i.id, i.qty])),
-      rushId: loaded.rushId as RushId,
-      travelMiles: loaded.travelMiles,
-      discountType: loaded.discountType as BuilderState["discountType"],
-      discountValue: loaded.discountValue,
-      depositPct: loaded.depositPct,
-    };
+    if (loaded) {
+      return {
+        selections: Object.fromEntries(loaded.items.map((i) => [i.id, i.qty])),
+        rushId: loaded.rushId as RushId,
+        travelMiles: loaded.travelMiles,
+        discountType: loaded.discountType as BuilderState["discountType"],
+        discountValue: loaded.discountValue,
+        depositPct: loaded.depositPct,
+      };
+    }
+    if (fromLead && fromLead.items.length) {
+      return {
+        ...emptyBuilderState(),
+        selections: Object.fromEntries(fromLead.items.map((i) => [i.id, i.qty])),
+        rushId: fromLead.rushId as RushId,
+        travelMiles: fromLead.travelMiles,
+      };
+    }
+    return emptyBuilderState();
   });
 
   // Rate overrides persist per-browser (same behavior as the original admin panel)
@@ -80,7 +102,7 @@ export function ProposalBuilder({
   const save = () => {
     const estimate = computeEstimate({ ...state, priceOverrides: overrides });
     startTransition(async () => {
-      const res = await saveProposal(details, estimate, savedId);
+      const res = await saveProposal(details, estimate, savedId, fromLead?.leadId);
       setMessage({ ok: res.ok, text: res.message });
       if (res.ok) {
         setSavedId(res.id);

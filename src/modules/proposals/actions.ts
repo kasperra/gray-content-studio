@@ -43,7 +43,8 @@ function proposalRow(details: ProposalDetails, estimate: Estimate) {
 export async function saveProposal(
   details: ProposalDetails,
   estimate: Estimate,
-  existingId?: string
+  existingId?: string,
+  leadId?: string
 ): Promise<{ ok: boolean; id?: string; publicId?: string; message: string }> {
   await requireAdmin();
   const supabase = await createSupabaseServer();
@@ -52,7 +53,7 @@ export async function saveProposal(
   if (!details.clientName && !details.title)
     return { ok: false, message: "Add a client name or project title." };
 
-  const row = proposalRow(details, estimate);
+  const row = { ...proposalRow(details, estimate), ...(leadId ? { lead_id: leadId } : {}) };
 
   if (existingId) {
     const { data, error } = await supabase

@@ -18,6 +18,7 @@ export type BoardLead = {
   status: LeadStatus;
   clientId: string | null;
   createdAt: string;
+  estimateTotal: number | null;
   notes: { body: string; kind: string; createdAt: string }[];
 };
 
@@ -93,6 +94,11 @@ export function PipelineBoard({ leads }: { leads: BoardLead[] }) {
                           {new Date(lead.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                           {lead.notes.length > 0 && ` · ${lead.notes.length} note${lead.notes.length === 1 ? "" : "s"}`}
                         </p>
+                        {lead.estimateTotal != null && (
+                          <p className="inline-block rounded-full bg-accent-soft text-accent text-[0.72rem] font-semibold px-2.5 py-0.5 mt-1.5">
+                            est. ${Math.round(lead.estimateTotal).toLocaleString("en-US")}
+                          </p>
+                        )}
                       </button>
 
                       <div className="flex items-center justify-between mt-3">
@@ -155,10 +161,10 @@ export function PipelineBoard({ leads }: { leads: BoardLead[] }) {
                           </div>
                           <div className="flex flex-wrap gap-x-4 gap-y-1">
                             <a
-                              href={`/admin/proposals/new?name=${encodeURIComponent(lead.name)}&company=${encodeURIComponent(lead.company ?? "")}&email=${encodeURIComponent(lead.email)}`}
+                              href={`/admin/proposals/new?lead=${lead.id}&name=${encodeURIComponent(lead.name)}&company=${encodeURIComponent(lead.company ?? "")}&email=${encodeURIComponent(lead.email)}`}
                               className="text-accent text-[0.8rem] font-semibold hover:underline underline-offset-4"
                             >
-                              Proposal →
+                              {lead.estimateTotal != null ? "Proposal from estimate →" : "Proposal →"}
                             </a>
                             {lead.clientId ? (
                               <a href={`/admin/clients/${lead.clientId}`} className="text-accent text-[0.8rem] font-semibold hover:underline underline-offset-4">
