@@ -16,6 +16,9 @@ const tabs = [
   { href: "/admin/proposals", label: "Proposals" },
   { href: "/admin/invoices", label: "Invoices" },
   { href: "/admin/assets", label: "Assets" },
+  { href: "/admin/social", label: "Social" },
+  { href: "/admin/templates", label: "Templates" },
+  { href: "/admin/analytics", label: "Analytics" },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -31,17 +34,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               Studio Admin
             </span>
           </div>
-          <nav className="flex items-center gap-5">
+          <nav className="flex items-center gap-3.5 lg:gap-5 flex-wrap justify-end">
             {tabs.map((t) => (
               <Link
                 key={t.href}
                 href={t.href}
-                className="text-[0.85rem] font-medium text-muted hover:text-ink transition-colors"
+                className="text-[0.82rem] font-medium text-muted hover:text-ink transition-colors"
               >
                 {t.label}
               </Link>
             ))}
-            <Link href="/" className="hidden md:inline text-[0.85rem] text-muted hover:text-ink transition-colors">
+            <Link href="/" className="hidden xl:inline text-[0.82rem] text-muted hover:text-ink transition-colors">
               View Site
             </Link>
             <SignOutButton />

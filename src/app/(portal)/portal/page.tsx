@@ -15,10 +15,11 @@ export default async function PortalPage() {
   const session = await requireUser();
   const supabase = await createSupabaseServer();
 
-  const [{ data: projects }, { data: activities }, { data: invoices }] = await Promise.all([
+  const [{ data: projects }, { data: activities }, { data: invoices }, { data: metrics }] = await Promise.all([
     supabase.from("projects").select("id, title, stage, due_date").order("created_at", { ascending: false }),
     supabase.from("activities").select("body, created_at").order("created_at", { ascending: false }).limit(8),
     supabase.from("invoices").select("number, amount, status, due_date").order("created_at", { ascending: false }).limit(10),
+    supabase.from("metric_snapshots").select("metric, value, captured_on").eq("module", "marketing").order("captured_on", { ascending: false }).limit(6),
   ]);
 
   return (
@@ -46,12 +47,20 @@ export default async function PortalPage() {
               Welcome{session.name ? `, ${session.name.split(" ")[0]}` : ""}
             </h1>
           </div>
-          <Link
-            href="/portal/assets"
-            className="rounded-full border border-accent/50 text-accent font-semibold uppercase text-[0.8rem] tracking-[0.08em] px-5 py-2.5 hover:bg-accent hover:text-bg transition-colors"
-          >
-            Asset Library →
-          </Link>
+          <div className="flex gap-3 flex-wrap">
+            <Link
+              href="/portal/assets"
+              className="rounded-full border border-accent/50 text-accent font-semibold uppercase text-[0.8rem] tracking-[0.08em] px-5 py-2.5 hover:bg-accent hover:text-bg transition-colors"
+            >
+              Asset Library →
+            </Link>
+            <Link
+              href="/portal/social"
+              className="rounded-full border border-accent/50 text-accent font-semibold uppercase text-[0.8rem] tracking-[0.08em] px-5 py-2.5 hover:bg-accent hover:text-bg transition-colors"
+            >
+              Social Workspace →
+            </Link>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-[1.5fr_1fr] gap-8 mt-10 items-start">
@@ -114,6 +123,22 @@ export default async function PortalPage() {
                 </ul>
               )}
             </section>
+
+            {metrics && metrics.length > 0 && (
+              <section className="bg-surface border border-rule rounded-lg p-6">
+                <h2 className="font-display text-[1.15rem] font-semibold mb-4">Your Numbers</h2>
+                <ul className="space-y-2 text-[0.88rem]">
+                  {metrics.map((m, i) => (
+                    <li key={i} className="flex justify-between gap-3">
+                      <span className="capitalize text-muted">{m.metric.replace(/_/g, " ")}</span>
+                      <span className="text-accent font-semibold tabular-nums">
+                        {Number(m.value).toLocaleString()}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
 
             {invoices && invoices.length > 0 && (
               <section className="bg-surface border border-rule rounded-lg p-6">
