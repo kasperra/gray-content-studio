@@ -39,8 +39,8 @@ export function WorkCard({ cs, delay = 0 }: { cs: CaseStudy; delay?: number }) {
         href={`/work/${cs.slug}`}
         className="group relative block aspect-4/5 overflow-hidden rounded-md bg-surface"
       >
-        <div className="absolute inset-0 animate-cardpan">
-          {cs.image ? (
+        {cs.image ? (
+          <div className="absolute inset-0 animate-cardpan">
             <Image
               src={cs.image}
               alt={`${cs.client} — ${cs.title}`}
@@ -48,14 +48,27 @@ export function WorkCard({ cs, delay = 0 }: { cs: CaseStudy; delay?: number }) {
               sizes="(max-width: 720px) 92vw, (max-width: 960px) 46vw, 30vw"
               className="object-cover grayscale contrast-105 scale-[1.01] transition-all duration-700 group-hover:grayscale-0 group-hover:scale-[1.07]"
             />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center p-6 bg-[radial-gradient(120%_90%_at_20%_10%,var(--color-accent-soft),transparent_60%),linear-gradient(160deg,var(--color-surface-2),var(--color-bg))]">
-              <span className="font-display text-[clamp(1.5rem,2.6vw,2.1rem)] uppercase tracking-[0.1em] text-center text-muted leading-tight transition-colors group-hover:text-accent">
-                {cs.client}
-              </span>
-            </div>
-          )}
-        </div>
+          </div>
+        ) : cs.logo ? (
+          <div className="absolute inset-0 flex items-center justify-center p-8 bg-[radial-gradient(120%_90%_at_20%_10%,var(--color-accent-soft),transparent_60%),linear-gradient(160deg,var(--color-surface-2),var(--color-bg))]">
+            <span className="w-[74%] max-w-[230px] rounded-xl bg-white flex items-center justify-center px-6 py-8 shadow-[0_10px_40px_rgba(0,0,0,0.35)] transition-transform duration-700 group-hover:scale-[1.05]">
+              <Image
+                src={cs.logo}
+                alt={`${cs.client} logo`}
+                width={230}
+                height={150}
+                sizes="(max-width: 720px) 60vw, 20vw"
+                className="object-contain w-full h-auto"
+              />
+            </span>
+          </div>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center p-6 bg-[radial-gradient(120%_90%_at_20%_10%,var(--color-accent-soft),transparent_60%),linear-gradient(160deg,var(--color-surface-2),var(--color-bg))]">
+            <span className="font-display text-[clamp(1.5rem,2.6vw,2.1rem)] uppercase tracking-[0.1em] text-center text-muted leading-tight transition-colors group-hover:text-accent">
+              {cs.client}
+            </span>
+          </div>
+        )}
         <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-bg/92 to-transparent">
           <span className="block text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-accent">
             {cs.categoryLabel}

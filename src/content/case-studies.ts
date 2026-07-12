@@ -13,7 +13,8 @@ export type CaseStudy = {
   category: "corporate" | "political" | "nonprofit" | "ecommerce" | "media";
   categoryLabel: string;
   year: string;
-  image?: string; // path under /public
+  image?: string; // cinematic still, rendered with the grayscale→color photo treatment
+  logo?: string; // brand logo, rendered on a light plate (for clients without a usable still)
   summary: string;
   challenge: string;
   solution: string;
@@ -32,6 +33,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     category: "corporate",
     categoryLabel: "Corporate",
     year: "2025",
+    image: "/img/exxonmobil.avif",
     summary:
       "A multi-year video partnership spanning internal communications and social advertising for one of the world's largest energy companies.",
     challenge:
@@ -145,6 +147,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     category: "corporate",
     categoryLabel: "Corporate",
     year: "2025–2026",
+    logo: "/img/anthem-logo.jpeg",
     summary:
       "Social media advertising that translates complex healthcare messaging into clear, human, short-form video.",
     challenge:
@@ -170,6 +173,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     category: "corporate",
     categoryLabel: "Corporate",
     year: "2024–2025",
+    image: "/img/dominion.avif",
     summary:
       "Short-form video for brand and internal communications — employee spotlights, event promos, and community campaigns.",
     challenge:
@@ -186,7 +190,7 @@ export const CASE_STUDIES: CaseStudy[] = [
       "One consistent visual voice across brand, internal, and community content",
       "A dependable production partner for recurring campaigns",
     ],
-    gallery: [],
+    gallery: ["/img/dominion.avif"],
   },
   {
     slug: "ll-flooring",
@@ -333,6 +337,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     category: "nonprofit",
     categoryLabel: "Nonprofit",
     year: "2024",
+    image: "/img/tappahannock.avif",
     summary:
       "Promotional tourism content highlighting local attractions and businesses.",
     challenge:
@@ -341,7 +346,7 @@ export const CASE_STUDIES: CaseStudy[] = [
       "Promotional tourism content spotlighting local attractions and businesses, one story at a time.",
     deliverables: ["Tourism promotional videos", "Local business features"],
     results: ["A visual identity for the town's tourism push"],
-    gallery: [],
+    gallery: ["/img/tappahannock.avif"],
   },
   {
     slug: "gigantic",
@@ -370,15 +375,16 @@ export const CASE_STUDIES: CaseStudy[] = [
   },
   {
     slug: "teddy",
-    client: "TEDDY · Pawminded",
+    client: "TEDDY · E&P Pawductions, LLC",
     title: "An 18-video eCourse, end to end",
     category: "media",
     categoryLabel: "Media",
     year: "2021",
+    image: "/img/teddy.avif",
     summary:
       "A complete dog-training eCourse — shot, edited, and delivered as a standalone product and in-app content.",
     challenge:
-      "Pawminded needed a full educational product — not clips, but a structured 18-video curriculum teaching fundamental dog training commands.",
+      "E&P Pawductions, LLC needed a full educational product — not clips, but a structured 18-video curriculum teaching fundamental dog training commands.",
     solution:
       "End-to-end production of the TEDDY course, including 'Crate 101' — planned, shot, edited, and delivered for both standalone sale and the TEDDY mobile app.",
     deliverables: [
@@ -390,7 +396,7 @@ export const CASE_STUDIES: CaseStudy[] = [
       "A sellable educational product delivered production-complete",
       "Content serving both direct sales and the app experience",
     ],
-    gallery: [],
+    gallery: ["/img/teddy.avif"],
   },
 ];
 
