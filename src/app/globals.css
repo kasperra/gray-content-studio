@@ -1,18 +1,21 @@
 @import "tailwindcss";
 
-/* Gray Content Studio design tokens — ported from the original static site */
+/* Gray Content Studio design tokens — aligned to the brand visual identity system.
+   Accent = Tuscan Sun (#FAC748), depth = Rich Mahogany (#301509). */
 @theme {
   --color-bg: #0b0b0c;
   --color-surface: #141416;
   --color-surface-2: #1b1b1e;
   --color-ink: #f5f2ec;
   --color-muted: #9b968e;
-  --color-accent: #d4a24e;
-  --color-accent-soft: rgba(212, 162, 78, 0.14);
+  --color-accent: #fac748; /* Tuscan Sun */
+  --color-accent-soft: rgba(250, 199, 72, 0.14);
+  --color-mahogany: #301509; /* Rich Mahogany */
+  --color-mahogany-soft: rgba(48, 21, 9, 0.55);
   --color-rule: rgba(245, 242, 236, 0.12);
 
-  --font-display: var(--font-fraunces), serif;
-  --font-body: var(--font-inter), sans-serif;
+  --font-display: var(--font-archivo), sans-serif;
+  --font-body: var(--font-hanken), sans-serif;
 
   --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
 

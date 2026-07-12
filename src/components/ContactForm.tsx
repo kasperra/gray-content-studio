@@ -11,7 +11,7 @@ import {
 import { money } from "@/modules/pricing/data";
 
 const fieldCls =
-  "w-full font-body text-base text-ink bg-surface border border-rule rounded px-4 py-[0.85em] focus:outline-none focus:border-accent transition-colors";
+  "w-full font-body text-base text-ink bg-surface border border-rule rounded px-4 py-[0.85em] focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/50 transition-colors";
 const labelCls = "text-[0.78rem] font-medium uppercase tracking-[0.14em] text-muted";
 
 export function ContactForm() {
@@ -118,7 +118,7 @@ export function ContactForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-full bg-accent text-bg border border-accent font-semibold uppercase text-[0.88rem] tracking-[0.08em] px-[1.9em] py-[0.78em] transition-all duration-200 hover:bg-transparent hover:text-accent hover:-translate-y-0.5 disabled:opacity-60 cursor-pointer"
+        className="rounded-full bg-accent text-bg border border-accent font-semibold uppercase text-[0.88rem] tracking-[0.08em] px-[1.9em] py-[0.78em] transition-all duration-200 hover:bg-transparent hover:text-accent hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:hover:translate-y-0 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
       >
         Get My Free Project Quote
       </button>

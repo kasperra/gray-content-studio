@@ -1,20 +1,21 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { Archivo, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const fraunces = Fraunces({
+// Brand display face — bold, wide, modern (Google-Fonts stand-in for "Horizon").
+const archivo = Archivo({
   subsets: ["latin"],
-  weight: "variable",
+  weight: ["400", "500", "600", "700", "800", "900"],
   style: ["normal", "italic"],
-  axes: ["opsz"],
-  variable: "--font-fraunces",
+  variable: "--font-archivo",
   display: "swap",
 });
 
-const inter = Inter({
+// Brand body face — clean, professional grotesque (stand-in for "Telegraf").
+const hanken = Hanken_Grotesk({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-inter",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-hanken",
   display: "swap",
 });
 
@@ -42,7 +43,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
+    <html lang="en" className={`${archivo.variable} ${hanken.variable}`}>
       <body>{children}</body>
     </html>
   );

@@ -12,7 +12,7 @@ export function SignOutButton() {
         router.replace("/");
         router.refresh();
       }}
-      className="rounded-full border border-rule text-[0.8rem] font-medium uppercase tracking-[0.08em] px-4 py-1.5 text-muted hover:text-accent hover:border-accent transition-colors cursor-pointer"
+      className="rounded-full border border-rule text-[0.8rem] font-medium uppercase tracking-[0.08em] px-4 py-1.5 text-muted hover:text-accent hover:border-accent transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
     >
       Sign Out
     </button>
