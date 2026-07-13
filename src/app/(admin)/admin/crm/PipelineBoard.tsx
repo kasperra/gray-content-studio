@@ -4,7 +4,10 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { setLeadStatus } from "@/modules/proposals/actions";
 import { convertLeadToClient } from "@/modules/clients/actions";
+import { deleteLead } from "@/modules/leads/actions";
 import { addNote } from "@/modules/crm/actions";
+
+const DANGER = "#d98a7a";
 
 type LeadStatus = "new" | "contacted" | "qualified" | "won" | "lost";
 
@@ -37,6 +40,21 @@ export function PipelineBoard({ leads }: { leads: BoardLead[] }) {
   const [pending, startTransition] = useTransition();
   const [openCard, setOpenCard] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [delError, setDelError] = useState("");
+
+  const removeLead = (leadId: string) => {
+    setDelError("");
+    startTransition(async () => {
+      const res = await deleteLead(leadId);
+      if (!res.ok) {
+        setDelError(res.message);
+        return;
+      }
+      setConfirmDelete(null);
+      router.refresh();
+    });
+  };
 
   const move = (lead: BoardLead, dir: -1 | 1) => {
     const idx = ORDER.indexOf(lead.status);
@@ -77,7 +95,16 @@ export function PipelineBoard({ leads }: { leads: BoardLead[] }) {
                   const isOpen = openCard === lead.id;
                   const idx = ORDER.indexOf(lead.status);
                   return (
-                    <article key={lead.id} className="bg-surface border border-rule rounded-lg p-4">
+                    <article key={lead.id} className="relative bg-surface border border-rule rounded-lg p-4">
+                      <button
+                        type="button"
+                        aria-label={`Delete ${lead.name}`}
+                        title={`Delete ${lead.name}`}
+                        onClick={() => { setConfirmDelete(lead.id); setDelError(""); }}
+                        className="absolute top-2 right-2 z-10 grid h-7 w-7 place-items-center rounded-full text-muted/70 hover:text-[#d98a7a] hover:bg-[#d98a7a1a] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d98a7a] focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                      >
+                        <span aria-hidden="true" className="text-[0.85rem] leading-none">✕</span>
+                      </button>
                       <button
                         onClick={() => {
                           setOpenCard(isOpen ? null : lead.id);
@@ -85,7 +112,7 @@ export function PipelineBoard({ leads }: { leads: BoardLead[] }) {
                         }}
                         className="w-full text-left cursor-pointer"
                       >
-                        <p className="font-medium text-[0.92rem]">{lead.name}</p>
+                        <p className="font-medium text-[0.92rem] pr-6">{lead.name}</p>
                         <p className="text-muted text-[0.8rem] mt-0.5">
                           {lead.company || "—"}
                           {lead.projectType ? ` · ${lead.projectType}` : ""}
@@ -184,6 +211,39 @@ export function PipelineBoard({ leads }: { leads: BoardLead[] }) {
                                 Convert to client →
                               </button>
                             )}
+                          </div>
+                        </div>
+                      )}
+
+                      {confirmDelete === lead.id && (
+                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2.5 rounded-lg bg-surface/97 backdrop-blur-sm p-4 text-center">
+                          <p className="text-[0.86rem] text-ink">
+                            Delete <span className="font-semibold">{lead.name}</span>?
+                          </p>
+                          <p className="text-muted text-[0.76rem] -mt-1">
+                            Removes the lead and its notes. Permanent.
+                          </p>
+                          {delError && (
+                            <p role="alert" className="text-[0.76rem]" style={{ color: DANGER }}>{delError}</p>
+                          )}
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <button
+                              type="button"
+                              onClick={() => removeLead(lead.id)}
+                              disabled={pending}
+                              className="rounded-full text-[0.74rem] font-semibold uppercase tracking-[0.08em] px-3.5 py-1.5 text-bg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                              style={{ background: DANGER, border: `1px solid ${DANGER}` }}
+                            >
+                              {pending ? "Deleting…" : "Delete"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setConfirmDelete(null); setDelError(""); }}
+                              disabled={pending}
+                              className="rounded-full border border-rule text-[0.74rem] font-medium uppercase tracking-[0.08em] px-3.5 py-1.5 text-muted hover:text-ink hover:border-ink/40 transition-colors cursor-pointer disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                            >
+                              Cancel
+                            </button>
                           </div>
                         </div>
                       )}

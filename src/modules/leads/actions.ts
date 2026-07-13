@@ -1,6 +1,8 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createSupabaseAdmin, supabaseConfigured } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth";
 import {
   parseDraft,
   estimateFromDraft,
@@ -88,4 +90,25 @@ export async function submitLead(
     ok: false,
     message: "Something went wrong sending your message. Please try again or email us directly.",
   };
+}
+
+/** Permanently delete a lead from the pipeline.
+ *
+ * The DB cascades the lead's notes (`activities.lead_id` is `on delete cascade`).
+ * Any proposal linked to the lead is preserved — `proposals.lead_id` is
+ * `on delete set null`, so it's just unlinked. Service-role, admin-gated, so RLS
+ * can't silently block the delete. */
+export async function deleteLead(
+  leadId: string
+): Promise<{ ok: boolean; message: string }> {
+  await requireAdmin();
+  if (!leadId) return { ok: false, message: "Missing lead." };
+
+  const admin = createSupabaseAdmin();
+  const { error } = await admin.from("leads").delete().eq("id", leadId);
+  if (error) return { ok: false, message: "Could not delete the lead." };
+
+  revalidatePath("/admin/crm");
+  revalidatePath("/admin");
+  return { ok: true, message: "Lead deleted." };
 }
