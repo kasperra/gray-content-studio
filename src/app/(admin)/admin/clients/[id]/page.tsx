@@ -4,6 +4,7 @@ import { createSupabaseServer, createSupabaseAdmin } from "@/lib/supabase/server
 import { stageLabel } from "@/modules/projects/stages";
 import { ClientLoginPanel } from "./ClientLoginPanel";
 import { NewProjectForm } from "./NewProjectForm";
+import { DeleteClientPanel } from "./DeleteClientPanel";
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -92,6 +93,17 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           </section>
         </div>
       </div>
+
+      <DeleteClientPanel
+        clientId={id}
+        company={client.company}
+        counts={{
+          projects: projects?.length ?? 0,
+          invoices: invoices?.length ?? 0,
+          contracts: contracts?.length ?? 0,
+          logins: profiles?.length ?? 0,
+        }}
+      />
     </>
   );
 }

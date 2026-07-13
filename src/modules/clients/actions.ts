@@ -31,6 +31,40 @@ export async function createClientRecord(input: {
   return { ok: true, id: data.id, message: "Client created." };
 }
 
+/** Permanently delete a client and everything tied to it.
+ *
+ * The DB cascades projects, deliverables, invoices, contracts, activities, assets,
+ * and metrics (all `on delete cascade`). Two things it does NOT cascade, handled here:
+ *   - Portal logins: `profiles.client_id` is `on delete set null`, so the auth users
+ *     are deleted explicitly (which cascades their profile rows) to avoid orphaned logins.
+ *   - Leads: `leads.client_id` is `on delete set null`, so lead history is preserved,
+ *     just unlinked — intentional.
+ *
+ * Uses the service-role client (admin-gated) so RLS can't silently block the delete. */
+export async function deleteClient(
+  clientId: string
+): Promise<{ ok: boolean; message: string }> {
+  await requireAdmin();
+  if (!clientId) return { ok: false, message: "Missing client." };
+
+  const admin = createSupabaseAdmin();
+
+  // 1. Remove any portal logins (auth users) linked to this client.
+  const { data: logins } = await admin.from("profiles").select("id").eq("client_id", clientId);
+  for (const login of logins ?? []) {
+    // Best-effort: if a login is already gone, keep going.
+    await admin.auth.admin.deleteUser(login.id).catch(() => {});
+  }
+
+  // 2. Delete the client — the database cascades the rest.
+  const { error } = await admin.from("clients").delete().eq("id", clientId);
+  if (error) return { ok: false, message: "Could not delete the client." };
+
+  revalidatePath("/admin/clients");
+  revalidatePath("/admin");
+  return { ok: true, message: "Client deleted." };
+}
+
 /** Convert a lead into a client record and link them. */
 export async function convertLeadToClient(
   leadId: string
