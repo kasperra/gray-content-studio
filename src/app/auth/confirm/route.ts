@@ -4,32 +4,42 @@ import { createSupabaseServer, supabaseConfigured } from "@/lib/supabase/server"
 
 /**
  * Handles the link in Supabase auth emails (password recovery, email confirm, etc.).
- * Verifies the one-time token, which sets the session cookies, then forwards the
- * user to `next` (the set-a-new-password screen for recovery).
+ * Establishes the session cookies, then forwards the user to `next` (the
+ * set-a-new-password screen for recovery). Supports both:
  *
- * Requires the Supabase email template to point here, e.g.:
- *   {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password
+ *   1. The DEFAULT Supabase email — arrives here with `?code=…` (PKCE); we call
+ *      exchangeCodeForSession. No email-template editing (and no custom SMTP) needed.
+ *   2. A CUSTOM template — `?token_hash=…&type=recovery&next=/reset-password`; verifyOtp.
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get("code");
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
   const next = searchParams.get("next") ?? "/reset-password";
+  // Only allow same-origin relative redirects.
+  const dest = next.startsWith("/") ? next : "/reset-password";
 
   const failure = new URL("/login", origin);
   failure.searchParams.set("error", "reset_link");
 
-  if (!supabaseConfigured() || !token_hash || !type) {
+  if (!supabaseConfigured()) {
     return NextResponse.redirect(failure);
   }
 
   const supabase = await createSupabaseServer();
-  const { error } = await supabase.auth.verifyOtp({ type, token_hash });
-  if (error) {
-    return NextResponse.redirect(failure);
+
+  // Default email (PKCE code flow).
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    return NextResponse.redirect(error ? failure : new URL(dest, origin));
   }
 
-  // Only allow same-origin relative redirects.
-  const dest = next.startsWith("/") ? next : "/reset-password";
-  return NextResponse.redirect(new URL(dest, origin));
+  // Custom email template (OTP token_hash flow).
+  if (token_hash && type) {
+    const { error } = await supabase.auth.verifyOtp({ type, token_hash });
+    return NextResponse.redirect(error ? failure : new URL(dest, origin));
+  }
+
+  return NextResponse.redirect(failure);
 }

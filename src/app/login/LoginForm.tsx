@@ -77,7 +77,7 @@ export function LoginForm() {
     try {
       const supabase = createSupabaseBrowser();
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/auth/confirm?next=/reset-password`,
       });
       if (error) {
         setError("Couldn't send the reset email. Please try again.");
