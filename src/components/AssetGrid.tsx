@@ -6,6 +6,7 @@ import { createSupabaseBrowser } from "@/lib/supabase/client";
 import { getDownloadUrl } from "@/lib/storage";
 import { KIND_ICONS, type AssetKind } from "@/modules/assets/kinds";
 import { updateAssetTags, deleteAsset } from "@/modules/assets/actions";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 
 export type AssetItem = {
   id: string;
@@ -164,30 +165,22 @@ export function AssetGrid({
                   {busy === a.id ? "…" : "Download"}
                 </button>
                 {isAdmin && (
-                  <>
-                    <button
-                      onClick={() => {
-                        setEditingTags(editingTags === a.id ? null : a.id);
-                        setTagDraft(a.tags.join(", "));
-                      }}
-                      className="rounded border border-rule text-[0.72rem] px-2.5 py-1.5 text-muted hover:text-accent hover:border-accent transition-colors cursor-pointer"
-                    >
-                      Tags
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm(`Delete "${a.name}"? The file is removed permanently.`))
-                          startTransition(async () => {
-                            await deleteAsset(a.id, clientId);
-                            router.refresh();
-                          });
-                      }}
-                      className="rounded border border-rule text-[0.72rem] px-2.5 py-1.5 text-muted hover:text-[#d98a7a] hover:border-[#d98a7a] transition-colors cursor-pointer"
-                    >
-                      ✕
-                    </button>
-                  </>
+                  <button
+                    onClick={() => {
+                      setEditingTags(editingTags === a.id ? null : a.id);
+                      setTagDraft(a.tags.join(", "));
+                    }}
+                    className="rounded border border-rule text-[0.72rem] px-2.5 py-1.5 text-muted hover:text-accent hover:border-accent transition-colors cursor-pointer"
+                  >
+                    Tags
+                  </button>
                 )}
+                <ConfirmDeleteButton
+                  action={deleteAsset}
+                  args={[a.id, clientId]}
+                  itemName={a.name}
+                  variant="inline"
+                />
               </div>
             </div>
           </article>

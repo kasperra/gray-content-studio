@@ -2,6 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSupabaseServer, createSupabaseAdmin } from "@/lib/supabase/server";
 import { stageLabel } from "@/modules/projects/stages";
+import { deleteProject, deleteContract } from "@/modules/projects/actions";
+import { deleteInvoice } from "@/modules/crm/actions";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { ClientLoginPanel } from "./ClientLoginPanel";
 import { NewProjectForm } from "./NewProjectForm";
 import { DeleteClientPanel } from "./DeleteClientPanel";
@@ -41,16 +44,23 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           ) : (
             <ul className="space-y-3 mb-5">
               {projects.map((p) => (
-                <li key={p.id}>
+                <li key={p.id} className="flex items-center gap-2">
                   <Link
                     href={`/admin/projects/${p.id}`}
-                    className="flex items-center justify-between gap-4 border border-rule rounded-md px-4 py-3 hover:border-accent/60 transition-colors"
+                    className="flex-1 flex items-center justify-between gap-4 border border-rule rounded-md px-4 py-3 hover:border-accent/60 transition-colors"
                   >
                     <span className="font-medium text-[0.95rem]">{p.title}</span>
                     <span className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-accent">
                       {stageLabel(p.stage)}
                     </span>
                   </Link>
+                  <ConfirmDeleteButton
+                    action={deleteProject}
+                    args={[p.id]}
+                    itemName={p.title}
+                    note="Its deliverables and files are removed."
+                    variant="inline"
+                  />
                 </li>
               ))}
             </ul>
@@ -75,17 +85,23 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             ) : (
               <ul className="space-y-2 text-[0.92rem]">
                 {(contracts ?? []).map((c) => (
-                  <li key={c.id} className="flex justify-between gap-4">
+                  <li key={c.id} className="flex items-center justify-between gap-4">
                     <span>📄 {c.title}</span>
-                    <span className="text-muted uppercase text-[0.75rem] font-semibold tracking-[0.1em]">{c.status}</span>
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      <span className="text-muted uppercase text-[0.75rem] font-semibold tracking-[0.1em]">{c.status}</span>
+                      <ConfirmDeleteButton action={deleteContract} args={[c.id]} itemName={c.title} variant="inline" />
+                    </div>
                   </li>
                 ))}
                 {(invoices ?? []).map((i) => (
-                  <li key={i.id} className="flex justify-between gap-4">
+                  <li key={i.id} className="flex items-center justify-between gap-4">
                     <span>🧾 {i.number}</span>
-                    <span className="text-muted uppercase text-[0.75rem] font-semibold tracking-[0.1em]">
-                      ${Number(i.amount).toLocaleString()} · {i.status}
-                    </span>
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      <span className="text-muted uppercase text-[0.75rem] font-semibold tracking-[0.1em]">
+                        ${Number(i.amount).toLocaleString()} · {i.status}
+                      </span>
+                      <ConfirmDeleteButton action={deleteInvoice} args={[i.id]} itemName={`invoice ${i.number}`} variant="inline" />
+                    </div>
                   </li>
                 ))}
               </ul>

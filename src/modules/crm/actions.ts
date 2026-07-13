@@ -10,6 +10,25 @@ function refreshCrm() {
   revalidatePath("/admin/invoices");
 }
 
+/** Delete an invoice. Invoices are leaf records, so this is a straight delete. */
+export async function deleteInvoice(
+  invoiceId: string
+): Promise<{ ok: boolean; message: string }> {
+  await requireAdmin();
+  if (!invoiceId) return { ok: false, message: "Missing invoice." };
+  const supabase = await createSupabaseServer();
+  const { data: invoice } = await supabase
+    .from("invoices")
+    .select("client_id")
+    .eq("id", invoiceId)
+    .single();
+  const { error } = await supabase.from("invoices").delete().eq("id", invoiceId);
+  if (error) return { ok: false, message: "Could not delete the invoice." };
+  refreshCrm();
+  if (invoice?.client_id) revalidatePath(`/admin/clients/${invoice.client_id}`);
+  return { ok: true, message: "Invoice deleted." };
+}
+
 export async function addNote(input: {
   body: string;
   leadId?: string;

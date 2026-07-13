@@ -1,5 +1,7 @@
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { STAGES, stageLabel } from "@/modules/projects/stages";
+import { deleteMetric } from "@/modules/social/actions";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { MetricRecorder } from "./MetricRecorder";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -128,7 +130,15 @@ export default async function AnalyticsPage() {
                           {(m.clients as unknown as { company: string } | null)?.company ?? "Studio"}
                         </td>
                         <td className="py-2 pr-3 tabular-nums text-accent">{Number(m.value).toLocaleString()}</td>
-                        <td className="py-2 text-muted">{m.captured_on}</td>
+                        <td className="py-2 pr-3 text-muted">{m.captured_on}</td>
+                        <td className="py-2 text-right">
+                          <ConfirmDeleteButton
+                            action={deleteMetric}
+                            args={[m.id]}
+                            itemName={`${m.metric.replace(/_/g, " ")} entry`}
+                            variant="inline"
+                          />
+                        </td>
                       </tr>
                     ))}
                   </tbody>

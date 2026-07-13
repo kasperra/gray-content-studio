@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSupabaseServer } from "@/lib/supabase/server";
+import { deleteProject } from "@/modules/projects/actions";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { ProjectManager } from "./ProjectManager";
 
 export default async function AdminProjectPage({ params }: { params: Promise<{ id: string }> }) {
@@ -49,6 +51,19 @@ export default async function AdminProjectPage({ params }: { params: Promise<{ i
           createdAt: a.created_at,
         }))}
       />
+
+      <div className="mt-10 pt-6 border-t border-rule flex items-center gap-3 flex-wrap">
+        <span className="text-muted text-[0.85rem]">
+          Delete this project — its deliverables and files are removed permanently.
+        </span>
+        <ConfirmDeleteButton
+          action={deleteProject}
+          args={[project.id]}
+          itemName={project.title}
+          variant="inline"
+          redirectTo={client ? `/admin/clients/${client.id}` : "/admin/clients"}
+        />
+      </div>
     </>
   );
 }

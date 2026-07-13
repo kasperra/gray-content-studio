@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseServer } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth";
+import { createSupabaseServer, createSupabaseAdmin } from "@/lib/supabase/server";
+import { requireAdmin, requireUser } from "@/lib/auth";
 import type { AssetKind } from "./kinds";
 
 function refresh(clientId: string) {
@@ -28,15 +28,24 @@ export async function createFolder(input: {
 }
 
 export async function deleteFolder(folderId: string, clientId: string): Promise<{ ok: boolean; message: string }> {
-  await requireAdmin();
-  const supabase = await createSupabaseServer();
-  const { count } = await supabase
+  // Admins delete any folder; clients may delete folders under their own client_id.
+  const session = await requireUser();
+  if (session.role !== "admin" && session.clientId !== clientId) {
+    return { ok: false, message: "Not allowed." };
+  }
+  const db = createSupabaseAdmin();
+  const { data: folder } = await db.from("asset_folders").select("client_id").eq("id", folderId).single();
+  if (!folder) return { ok: false, message: "Folder not found." };
+  if (session.role !== "admin" && folder.client_id !== session.clientId) {
+    return { ok: false, message: "Not allowed." };
+  }
+  const { count } = await db
     .from("assets")
     .select("id", { count: "exact", head: true })
     .eq("folder_id", folderId);
   if (count && count > 0)
     return { ok: false, message: "Folder isn't empty — move or delete its assets first." };
-  await supabase.from("asset_folders").delete().eq("id", folderId);
+  await db.from("asset_folders").delete().eq("id", folderId);
   refresh(clientId);
   return { ok: true, message: "Folder deleted." };
 }
@@ -77,19 +86,27 @@ export async function updateAssetTags(assetId: string, clientId: string, tags: s
 }
 
 export async function deleteAsset(assetId: string, clientId: string): Promise<{ ok: boolean; message: string }> {
-  await requireAdmin();
-  const supabase = await createSupabaseServer();
-  const { data: asset } = await supabase
+  // Admins delete any asset; clients may delete assets under their own client_id.
+  const session = await requireUser();
+  if (session.role !== "admin" && session.clientId !== clientId) {
+    return { ok: false, message: "Not allowed." };
+  }
+  const db = createSupabaseAdmin();
+  const { data: asset } = await db
     .from("assets")
-    .select("storage_path")
+    .select("storage_path, client_id")
     .eq("id", assetId)
     .single();
-  if (asset?.storage_path) {
-    await supabase.storage.from("assets").remove([asset.storage_path]);
+  if (!asset) return { ok: false, message: "Asset not found." };
+  if (session.role !== "admin" && asset.client_id !== session.clientId) {
+    return { ok: false, message: "Not allowed." };
+  }
+  if (asset.storage_path) {
+    await db.storage.from("assets").remove([asset.storage_path]);
   }
   // Older versions chained to this asset are preserved; unlink them
-  await supabase.from("assets").update({ version_of: null }).eq("version_of", assetId);
-  await supabase.from("assets").delete().eq("id", assetId);
+  await db.from("assets").update({ version_of: null }).eq("version_of", assetId);
+  await db.from("assets").delete().eq("id", assetId);
   refresh(clientId);
   return { ok: true, message: "Asset deleted." };
 }

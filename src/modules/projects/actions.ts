@@ -171,3 +171,59 @@ export async function addDocument(input: {
   revalidatePath(`/admin/clients/${input.clientId}`);
   return { ok: true, message: `${input.kind === "contract" ? "Contract" : "Invoice"} saved.` };
 }
+
+/** Delete a project. The DB cascades deliverables (and their versions/comments),
+    activities, and metrics. Deliverable files are removed from storage first. */
+export async function deleteProject(
+  projectId: string
+): Promise<{ ok: boolean; message: string }> {
+  await requireAdmin();
+  if (!projectId) return { ok: false, message: "Missing project." };
+  const supabase = await createSupabaseServer();
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("client_id")
+    .eq("id", projectId)
+    .single();
+
+  // Remove deliverable files before the cascade drops their rows.
+  const { data: dels } = await supabase
+    .from("deliverables")
+    .select("storage_path")
+    .eq("project_id", projectId);
+  const paths = (dels ?? []).map((d) => d.storage_path).filter(Boolean) as string[];
+  if (paths.length) await supabase.storage.from("deliverables").remove(paths);
+
+  const { error } = await supabase.from("projects").delete().eq("id", projectId);
+  if (error) return { ok: false, message: "Could not delete the project." };
+
+  refresh(projectId);
+  if (project?.client_id) revalidatePath(`/admin/clients/${project.client_id}`);
+  return { ok: true, message: "Project deleted." };
+}
+
+/** Delete a contract/document, including its file in the documents bucket. */
+export async function deleteContract(
+  contractId: string
+): Promise<{ ok: boolean; message: string }> {
+  await requireAdmin();
+  if (!contractId) return { ok: false, message: "Missing document." };
+  const supabase = await createSupabaseServer();
+
+  const { data: contract } = await supabase
+    .from("contracts")
+    .select("storage_path, client_id")
+    .eq("id", contractId)
+    .single();
+  if (contract?.storage_path) {
+    await supabase.storage.from("documents").remove([contract.storage_path]);
+  }
+
+  const { error } = await supabase.from("contracts").delete().eq("id", contractId);
+  if (error) return { ok: false, message: "Could not delete the document." };
+
+  if (contract?.client_id) revalidatePath(`/admin/clients/${contract.client_id}`);
+  revalidatePath("/admin/projects");
+  return { ok: true, message: "Document deleted." };
+}

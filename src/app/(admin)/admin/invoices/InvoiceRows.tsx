@@ -1,8 +1,9 @@
 "use client";
 
 import { useTransition } from "react";
-import { setInvoiceStatus } from "@/modules/crm/actions";
+import { setInvoiceStatus, deleteInvoice } from "@/modules/crm/actions";
 import { money } from "@/modules/pricing/data";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 
 type Row = {
   id: string;
@@ -42,17 +43,25 @@ export function InvoiceRows({ rows }: { rows: Row[] }) {
           <td className="py-3.5 pr-4 text-accent font-semibold tabular-nums">{money(r.amount)}</td>
           <td className="py-3.5 pr-4 hidden sm:table-cell text-muted">{r.dueDate ?? "—"}</td>
           <td className="py-3.5">
-            <select
-              value={r.status}
-              disabled={pending}
-              onChange={(e) => startTransition(() => setInvoiceStatus(r.id, e.target.value as Row["status"]))}
-              aria-label={`Status of invoice ${r.number}`}
-              className={`rounded-full border bg-transparent text-[0.72rem] font-semibold uppercase tracking-[0.1em] px-3 py-1 cursor-pointer ${statusColor[r.status]}`}
-            >
-              {STATUSES.map((s) => (
-                <option key={s} value={s} className="bg-surface text-ink">{s}</option>
-              ))}
-            </select>
+            <div className="flex items-center gap-3">
+              <select
+                value={r.status}
+                disabled={pending}
+                onChange={(e) => startTransition(() => setInvoiceStatus(r.id, e.target.value as Row["status"]))}
+                aria-label={`Status of invoice ${r.number}`}
+                className={`rounded-full border bg-transparent text-[0.72rem] font-semibold uppercase tracking-[0.1em] px-3 py-1 cursor-pointer ${statusColor[r.status]}`}
+              >
+                {STATUSES.map((s) => (
+                  <option key={s} value={s} className="bg-surface text-ink">{s}</option>
+                ))}
+              </select>
+              <ConfirmDeleteButton
+                action={deleteInvoice}
+                args={[r.id]}
+                itemName={`invoice ${r.number}`}
+                variant="inline"
+              />
+            </div>
           </td>
         </tr>
       ))}
