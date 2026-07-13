@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { NewClientForm } from "./NewClientForm";
+import { ClientListCard } from "./ClientListCard";
 
 export default async function ClientsPage() {
   const supabase = await createSupabaseServer();
@@ -24,20 +24,14 @@ export default async function ClientsPage() {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
           {clients.map((c) => (
-            <Link
+            <ClientListCard
               key={c.id}
-              href={`/admin/clients/${c.id}`}
-              className="bg-surface border border-rule rounded-lg p-6 hover:border-accent/60 transition-colors"
-            >
-              <p className="font-display text-[1.2rem] font-semibold">{c.company}</p>
-              <p className="text-muted text-[0.88rem] mt-1">
-                {c.contact_name || "—"}
-                {c.contact_email ? ` · ${c.contact_email}` : ""}
-              </p>
-              <p className="text-accent text-[0.78rem] font-semibold uppercase tracking-[0.14em] mt-3">
-                {(c.projects as { id: string }[]).length} project{(c.projects as { id: string }[]).length === 1 ? "" : "s"}
-              </p>
-            </Link>
+              id={c.id}
+              company={c.company}
+              contactName={c.contact_name}
+              contactEmail={c.contact_email}
+              projectCount={(c.projects as { id: string }[]).length}
+            />
           ))}
         </div>
       )}
