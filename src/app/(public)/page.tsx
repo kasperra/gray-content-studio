@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ButtonGold, ButtonGhost, Eyebrow, SectionTitle } from "@/components/Buttons";
 import { Reveal } from "@/components/Reveal";
 import { ContactForm } from "@/components/ContactForm";
-import { Container, TrustedBy, WorkCard, TestimonialCards, SectionHead } from "@/components/sections";
+import { Container, TrustedBy, WorkCard, MeetFounder, SectionHead } from "@/components/sections";
 import { SERVICES, PROCESS_STEPS, INDUSTRIES, PACKAGES, FAQS } from "@/content/site";
 import { CASE_STUDIES } from "@/content/case-studies";
 
@@ -167,11 +167,11 @@ export default function HomePage() {
         </Container>
       </section>
 
-      {/* Testimonials */}
+      {/* Meet the founder */}
       <section className="py-28 border-t border-rule">
         <Container>
-          <SectionHead eyebrow="Client Voices" title="What working with us feels like" />
-          <TestimonialCards />
+          <SectionHead eyebrow="Meet the Founder" title="The person behind the lens" />
+          <MeetFounder />
         </Container>
       </section>
 

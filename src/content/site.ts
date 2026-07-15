@@ -162,41 +162,16 @@ export const INDUSTRIES: Industry[] = [
   },
 ];
 
-export type Testimonial = {
-  quote: string;
-  author: string;
-  role: string;
-  rating: number;
-  placeholder?: boolean;
+export const FOUNDER = {
+  name: "Laila Gray",
+  role: "Founder & Creative Director",
+  image: "/img/founder.jpg",
+  alt: "Laila Gray, Founder and Creative Director of Gray Content Studio",
+  bio: [
+    "Laila Gray is the Founder & Creative Director of Gray Content Studio, where she helps brands tell authentic stories through strategic photo, video, and digital content. She founded the studio with the belief that great content should do more than look good — it should build trust, create meaningful connections, and drive results.",
+    "Laila brings a thoughtful blend of creative direction, visual storytelling, and marketing strategy to every project, guiding clients from concept to final delivery. Her collaborative approach and attention to detail ensure every piece of content reflects each brand's unique voice while helping businesses grow with confidence.",
+  ],
 };
-
-/* Replace these with real client quotes — each is marked placeholder. */
-export const TESTIMONIALS: Testimonial[] = [
-  {
-    quote:
-      "Every deadline hit, every cut better than we imagined. Gray Content Studio runs like a much bigger shop. [PLACEHOLDER — replace with a real quote]",
-    author: "Client Name",
-    role: "Marketing Director, Corporate Client",
-    rating: 5,
-    placeholder: true,
-  },
-  {
-    quote:
-      "They took a complicated message and made people actually watch it. Our team keeps coming back. [PLACEHOLDER — replace with a real quote]",
-    author: "Client Name",
-    role: "Communications Lead, Nonprofit",
-    rating: 5,
-    placeholder: true,
-  },
-  {
-    quote:
-      "The campaign creative outperformed everything we'd run before. Worth every dollar. [PLACEHOLDER — replace with a real quote]",
-    author: "Client Name",
-    role: "Founder, E-commerce Brand",
-    rating: 5,
-    placeholder: true,
-  },
-];
 
 export type Package = {
   name: string;

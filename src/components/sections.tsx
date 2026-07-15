@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Reveal } from "./Reveal";
 import { Eyebrow, SectionTitle } from "./Buttons";
-import { CLIENTS, TESTIMONIALS } from "@/content/site";
+import { CLIENTS, FOUNDER } from "@/content/site";
 import type { CaseStudy } from "@/content/case-studies";
 
 export function Container({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -83,23 +83,35 @@ export function WorkCard({ cs, delay = 0 }: { cs: CaseStudy; delay?: number }) {
   );
 }
 
-export function TestimonialCards() {
+export function MeetFounder() {
   return (
-    <div className="grid md:grid-cols-3 gap-6">
-      {TESTIMONIALS.map((t, i) => (
-        <Reveal key={i} delay={i * 0.12}>
-          <figure className="h-full bg-surface border border-rule rounded-lg p-7 flex flex-col">
-            <div className="text-accent text-[0.9rem] tracking-[0.2em]" aria-label={`${t.rating} out of 5 stars`}>
-              {"★".repeat(t.rating)}
-            </div>
-            <blockquote className="text-[0.97rem] text-ink/90 mt-4 grow">“{t.quote}”</blockquote>
-            <figcaption className="mt-5 pt-4 border-t border-rule">
-              <span className="block font-medium text-[0.92rem]">{t.author}</span>
-              <span className="block text-muted text-[0.82rem]">{t.role}</span>
-            </figcaption>
-          </figure>
-        </Reveal>
-      ))}
+    <div className="grid lg:grid-cols-[0.85fr_1fr] gap-10 lg:gap-16 items-center">
+      <Reveal>
+        <div className="relative aspect-4/5 overflow-hidden rounded-lg bg-surface">
+          <Image
+            src={FOUNDER.image}
+            alt={FOUNDER.alt}
+            fill
+            sizes="(max-width: 1024px) 92vw, 40vw"
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-bg/45 to-transparent" />
+        </div>
+      </Reveal>
+
+      <Reveal delay={0.12}>
+        <p className="font-display text-[1.6rem] font-semibold">{FOUNDER.name}</p>
+        <p className="text-accent text-[0.78rem] font-semibold uppercase tracking-[0.24em] mt-1.5">
+          {FOUNDER.role}
+        </p>
+        <div className="mt-6 space-y-4">
+          {FOUNDER.bio.map((para) => (
+            <p key={para} className="text-muted text-[1rem] leading-relaxed">
+              {para}
+            </p>
+          ))}
+        </div>
+      </Reveal>
     </div>
   );
 }
