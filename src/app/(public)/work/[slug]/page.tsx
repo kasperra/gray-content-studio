@@ -29,6 +29,19 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
   const cs = getCaseStudy((await params).slug);
   if (!cs) notFound();
 
+  // Portfolio reels live at /video/<slug>.mp4 for the clients that have one.
+  const VIDEO_SLUGS = new Set([
+    "essential-elements",
+    "hair-la-vie",
+    "gigantic",
+    "1md-nutrition",
+    "ll-flooring",
+    "ccwa",
+    "michael-blake",
+    "dominion-energy",
+  ]);
+  const videoSrc = VIDEO_SLUGS.has(cs.slug) ? `/video/${cs.slug}.mp4` : null;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -85,12 +98,18 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
                 </div>
               </Reveal>
             )}
-            {cs.testimonial && (
+            {videoSrc && (
               <Reveal>
-                <blockquote className="border-l-2 border-accent pl-6 py-1">
-                  <p className="font-display italic text-[1.15rem] text-ink/90">“{cs.testimonial.quote}”</p>
-                  <cite className="block not-italic text-muted text-[0.9rem] mt-3">— {cs.testimonial.author}</cite>
-                </blockquote>
+                <h2 className="font-display text-[1.6rem] font-semibold text-accent">Watch the Work</h2>
+                <video
+                  controls
+                  playsInline
+                  preload="metadata"
+                  poster={cs.image}
+                  className="w-full mt-4 rounded-md border border-rule bg-black aspect-video"
+                >
+                  <source src={videoSrc} type="video/mp4" />
+                </video>
               </Reveal>
             )}
           </div>

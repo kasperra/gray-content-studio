@@ -21,7 +21,6 @@ export type CaseStudy = {
   deliverables: string[];
   results: string[];
   gallery: string[];
-  testimonial?: { quote: string; author: string; placeholder?: boolean };
   featured?: boolean;
 };
 
@@ -52,12 +51,6 @@ export const CASE_STUDIES: CaseStudy[] = [
       "Content delivered on schedule across every distribution channel",
     ],
     gallery: [],
-    testimonial: {
-      quote:
-        "Working with Gray Content Studio gave us broadcast-quality content with agency-level reliability. [PLACEHOLDER — replace with a real client quote]",
-      author: "Communications Team, ExxonMobil",
-      placeholder: true,
-    },
     featured: true,
   },
   {
