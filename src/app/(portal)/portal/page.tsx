@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { Wordmark } from "@/components/Nav";
 import { STAGES, stageIndex, stageLabel } from "@/modules/projects/stages";
-import { SignOutButton } from "./SignOutButton";
+import { PortalHeader } from "./PortalHeader";
 
 export const metadata: Metadata = {
   title: "Client Portal",
@@ -24,20 +23,7 @@ export default async function PortalPage() {
 
   return (
     <main className="min-h-svh">
-      <header className="h-[76px] flex items-center border-b border-rule">
-        <div className="w-[min(1200px,92vw)] mx-auto flex items-center justify-between gap-6">
-          <Wordmark />
-          <div className="flex items-center gap-5">
-            <span className="text-muted text-[0.85rem] hidden sm:inline">{session.email}</span>
-            {session.role === "admin" && (
-              <Link href="/admin" className="text-accent text-[0.85rem] font-semibold hover:underline underline-offset-4">
-                Studio Admin →
-              </Link>
-            )}
-            <SignOutButton />
-          </div>
-        </div>
-      </header>
+      <PortalHeader email={session.email} isAdmin={session.role === "admin"} />
 
       <div className="w-[min(1200px,92vw)] mx-auto py-14">
         <div className="flex items-end justify-between gap-4 flex-wrap">

@@ -11,7 +11,7 @@ export function Wordmark({ className = "" }: { className?: string }) {
   return (
     <Link
       href="/"
-      className={`font-display text-[1.02rem] font-semibold uppercase tracking-[0.22em] whitespace-nowrap rounded-sm ${focusRing} ${className}`}
+      className={`font-display text-[0.86rem] tracking-[0.16em] sm:text-[1.02rem] sm:tracking-[0.22em] font-semibold uppercase whitespace-nowrap rounded-sm ${focusRing} ${className}`}
     >
       Gray<span className="text-accent">·</span>Content<span className="text-accent">·</span>Studio
     </Link>

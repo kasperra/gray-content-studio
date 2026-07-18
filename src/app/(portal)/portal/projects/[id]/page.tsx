@@ -3,9 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { Wordmark } from "@/components/Nav";
 import { STAGES, stageIndex } from "@/modules/projects/stages";
-import { SignOutButton } from "../../SignOutButton";
+import { PortalHeader } from "../../PortalHeader";
 import { DeliverableList } from "./DeliverableList";
 
 export const metadata: Metadata = {
@@ -35,15 +34,7 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
 
   return (
     <main className="min-h-svh">
-      <header className="h-[76px] flex items-center border-b border-rule">
-        <div className="w-[min(1200px,92vw)] mx-auto flex items-center justify-between gap-6">
-          <Wordmark />
-          <div className="flex items-center gap-5">
-            <span className="text-muted text-[0.85rem] hidden sm:inline">{session.email}</span>
-            <SignOutButton />
-          </div>
-        </div>
-      </header>
+      <PortalHeader email={session.email} />
 
       <div className="w-[min(1200px,92vw)] mx-auto py-12">
         <Link href="/portal" className="text-muted text-[0.85rem] hover:text-ink transition-colors">

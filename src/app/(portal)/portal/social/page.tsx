@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { Wordmark } from "@/components/Nav";
-import { SignOutButton } from "../SignOutButton";
+import { PortalHeader } from "../PortalHeader";
 import { SocialWorkspace } from "@/components/SocialWorkspace";
 import type { PostStatus } from "@/modules/social/platforms";
 
@@ -25,15 +24,7 @@ export default async function PortalSocialPage() {
 
   return (
     <main className="min-h-svh">
-      <header className="h-[76px] flex items-center border-b border-rule">
-        <div className="w-[min(1200px,92vw)] mx-auto flex items-center justify-between gap-6">
-          <Wordmark />
-          <div className="flex items-center gap-5">
-            <span className="text-muted text-[0.85rem] hidden sm:inline">{session.email}</span>
-            <SignOutButton />
-          </div>
-        </div>
-      </header>
+      <PortalHeader email={session.email} />
 
       <div className="w-[min(1200px,92vw)] mx-auto py-12">
         <Link href="/portal" className="text-muted text-[0.85rem] hover:text-ink transition-colors">
