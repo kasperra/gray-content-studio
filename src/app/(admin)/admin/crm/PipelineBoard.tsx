@@ -73,12 +73,12 @@ export function PipelineBoard({ leads }: { leads: BoardLead[] }) {
   };
 
   return (
-    <div className="overflow-x-auto pb-4 -mx-2 px-2">
+    <div className="overflow-x-auto overscroll-x-contain snap-x snap-proximity pb-4 -mx-2 px-2 [scrollbar-width:thin]">
       <div className="grid grid-cols-5 gap-4 min-w-[1080px]">
         {COLUMNS.map((col) => {
           const cards = leads.filter((l) => l.status === col.id);
           return (
-            <section key={col.id} aria-label={`${col.label} leads`}>
+            <section key={col.id} aria-label={`${col.label} leads`} className="snap-start">
               <header className="flex items-baseline justify-between gap-2 px-1 mb-3">
                 <h2 className="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-accent">
                   {col.label}

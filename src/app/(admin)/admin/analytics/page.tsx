@@ -80,8 +80,8 @@ export default async function AnalyticsPage() {
             <h3 className="font-display text-[1.05rem] font-semibold mb-4">Projects by stage</h3>
             <div className="space-y-2.5">
               {stageCounts.map((s) => (
-                <div key={s.stage} className="grid grid-cols-[130px_1fr_2rem] items-center gap-3">
-                  <span className="text-[0.82rem] text-muted">{s.stage}</span>
+                <div key={s.stage} className="grid grid-cols-[minmax(84px,110px)_1fr_2rem] sm:grid-cols-[130px_1fr_2rem] items-center gap-2.5 sm:gap-3">
+                  <span className="text-[0.82rem] text-muted truncate">{s.stage}</span>
                   <div className="h-4 rounded bg-bg overflow-hidden">
                     <div className="h-full bg-accent rounded" style={{ width: `${(s.count / maxStage) * 100}%` }} />
                   </div>
@@ -108,8 +108,8 @@ export default async function AnalyticsPage() {
             ) : (
               <div className="space-y-2.5 mb-6">
                 {metricSummaries.map(([name, v]) => (
-                  <div key={name} className="grid grid-cols-[130px_1fr_5rem] items-center gap-3">
-                    <span className="text-[0.82rem] text-muted capitalize">{name.replace(/_/g, " ")}</span>
+                  <div key={name} className="grid grid-cols-[minmax(84px,110px)_1fr_3.5rem] sm:grid-cols-[130px_1fr_5rem] items-center gap-2.5 sm:gap-3">
+                    <span className="text-[0.82rem] text-muted capitalize truncate">{name.replace(/_/g, " ")}</span>
                     <div className="h-4 rounded bg-bg overflow-hidden">
                       <div className="h-full bg-accent rounded" style={{ width: `${(v.total / maxMetric) * 100}%` }} />
                     </div>
@@ -121,7 +121,8 @@ export default async function AnalyticsPage() {
             {marketing.length > 0 && (
               <details>
                 <summary className="text-muted text-[0.82rem] cursor-pointer">All entries ({marketing.length})</summary>
-                <table className="w-full border-collapse text-[0.85rem] mt-3">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[28rem] border-collapse text-[0.85rem] mt-3">
                   <tbody>
                     {marketing.map((m) => (
                       <tr key={m.id} className="border-t border-rule">
@@ -143,6 +144,7 @@ export default async function AnalyticsPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </details>
             )}
           </div>
@@ -155,9 +157,9 @@ export default async function AnalyticsPage() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-surface border border-rule rounded-md px-5 py-4">
+    <div className="bg-surface border border-rule rounded-md px-4 py-3.5 sm:px-5 sm:py-4">
       <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted">{label}</p>
-      <p className="font-display text-[1.5rem] mt-1">{value}</p>
+      <p className="font-display text-[1.25rem] sm:text-[1.5rem] tabular-nums mt-1 break-words">{value}</p>
     </div>
   );
 }

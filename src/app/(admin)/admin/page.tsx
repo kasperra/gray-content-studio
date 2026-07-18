@@ -98,9 +98,9 @@ export default async function AdminDashboardPage() {
 
 function Stat({ label, value, href }: { label: string; value: string; href: string }) {
   return (
-    <Link href={href} className="bg-surface border border-rule rounded-md px-5 py-4 hover:border-accent/60 transition-colors">
+    <Link href={href} className="bg-surface border border-rule rounded-md px-4 py-3.5 sm:px-5 sm:py-4 hover:border-accent/60 transition-colors">
       <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted">{label}</p>
-      <p className="font-display text-[1.45rem] mt-1">{value}</p>
+      <p className="font-display text-[1.2rem] sm:text-[1.45rem] tabular-nums mt-1 break-words">{value}</p>
     </Link>
   );
 }

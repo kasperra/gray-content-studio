@@ -38,7 +38,7 @@ export function MetricRecorder({ clients }: { clients: { id: string; company: st
   };
 
   return (
-    <div className="bg-surface border border-rule rounded-lg p-6">
+    <div className="@container bg-surface border border-rule rounded-lg p-5 sm:p-6">
       <h3 className="font-display text-[1.05rem] font-semibold mb-4">Record a metric</h3>
       <div className="grid gap-3.5">
         <div className="grid gap-1.5">
@@ -68,7 +68,7 @@ export function MetricRecorder({ clients }: { clients: { id: string; company: st
             />
           )}
         </div>
-        <div className="grid grid-cols-2 gap-3.5">
+        <div className="grid grid-cols-1 @[19rem]:grid-cols-2 gap-3.5">
           <div className="grid gap-1.5">
             <label htmlFor="m-value" className={labelCls}>Value</label>
             <input id="m-value" type="number" step="any" value={value} onChange={(e) => setValue(e.target.value)} placeholder="12500" className={fieldCls} />
