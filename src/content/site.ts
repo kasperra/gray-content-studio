@@ -5,19 +5,21 @@
    with real client quotes before launch marketing pushes.
    ============================================================ */
 
-export const CLIENTS = [
-  "ExxonMobil",
-  "Anthem",
-  "Dominion Energy",
-  "iHeartRadio",
-  "LL Flooring",
-  "1MD Nutrition",
-  "Hair La Vie",
-  "VPAP",
-  "Essential Elements",
-  "Gigantic",
-  "CCWA",
-  "Visit Tappahannock",
+/* Marquee entries — `logo` renders as an image (transparent PNG on the dark bg);
+   entries without one render as text. */
+export const CLIENTS: { name: string; logo?: string }[] = [
+  { name: "ExxonMobil", logo: "/img/trusted/exxonmobil.png" },
+  { name: "Anthem", logo: "/img/trusted/anthem.png" },
+  { name: "Dominion Energy" },
+  { name: "iHeartRadio", logo: "/img/trusted/iheartradio.png" },
+  { name: "LL Flooring", logo: "/img/trusted/ll-flooring.png" },
+  { name: "1MD Nutrition", logo: "/img/trusted/1md.png" },
+  { name: "Hair La Vie", logo: "/img/trusted/hair-la-vie.png" },
+  { name: "VPAP" },
+  { name: "Essential Elements", logo: "/img/trusted/essential-elements.png" },
+  { name: "Gigantic" },
+  { name: "CCWA" },
+  { name: "Visit Tappahannock" },
 ];
 
 export const SERVICES = [
@@ -165,7 +167,7 @@ export const INDUSTRIES: Industry[] = [
 export const FOUNDER = {
   name: "Laila Gray",
   role: "Founder & Creative Director",
-  image: "/img/founder.jpg",
+  image: "/img/laila-centered.jpg",
   alt: "Laila Gray, Founder and Creative Director of Gray Content Studio",
   bio: [
     "Laila Gray is the Founder & Creative Director of Gray Content Studio, where she helps brands tell authentic stories through strategic photo, video, and digital content. She founded the studio with the belief that great content should do more than look good — it should build trust, create meaningful connections, and drive results.",

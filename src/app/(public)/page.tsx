@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ButtonGold, ButtonGhost, Eyebrow, SectionTitle } from "@/components/Buttons";
 import { Reveal } from "@/components/Reveal";
 import { ContactForm } from "@/components/ContactForm";
+import { HeroVideo } from "@/components/HeroVideo";
 import { Container, TrustedBy, WorkCard, MeetFounder, SectionHead } from "@/components/sections";
 import { SERVICES, PROCESS_STEPS, INDUSTRIES, PACKAGES, FAQS } from "@/content/site";
 import { CASE_STUDIES } from "@/content/case-studies";
@@ -46,17 +46,13 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSONLD) }}
       />
 
-      {/* Hero — swap the Image for a muted autoplay <video> when a showreel file exists */}
+      {/* Hero — silent looping reel snippet; poster shows for reduced-motion visitors */}
       <section className="relative min-h-svh flex items-center overflow-hidden">
         <div className="absolute inset-0 -z-20">
-          <Image
-            src="/img/iheart.jpg"
-            alt="Cinematic audio waveform glowing red and gold against black"
-            fill
-            priority
-            fetchPriority="high"
-            sizes="100vw"
-            className="object-cover animate-kenburns"
+          <HeroVideo
+            src="/video/hero-rctv.mp4"
+            poster="/img/iheart.jpg"
+            className="h-full w-full object-cover"
           />
         </div>
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(11,11,12,0.92)_0%,rgba(11,11,12,0.55)_55%,rgba(11,11,12,0.25)_100%),linear-gradient(to_top,var(--color-bg)_0%,transparent_35%)]" />
@@ -139,7 +135,7 @@ export default function HomePage() {
             ))}
           </div>
           <Reveal className="mt-10 text-center">
-            <ButtonGhost href="/work">See All Case Studies</ButtonGhost>
+            <ButtonGhost href="/work">See more of our work</ButtonGhost>
           </Reveal>
         </Container>
       </section>

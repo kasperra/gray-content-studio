@@ -17,15 +17,27 @@ export function TrustedBy() {
       <Eyebrow className="text-center mb-10">Trusted By</Eyebrow>
       <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)] group">
         <div className="flex items-center gap-[4.5rem] w-max animate-marquee group-hover:[animation-play-state:paused]">
-          {marks.map((c, i) => (
-            <span
-              key={i}
-              aria-hidden={i >= CLIENTS.length}
-              className="font-display text-[1.12rem] uppercase tracking-[0.18em] whitespace-nowrap text-muted opacity-60 hover:opacity-100 hover:text-ink transition-all"
-            >
-              {c}
-            </span>
-          ))}
+          {marks.map((c, i) =>
+            c.logo ? (
+              <Image
+                key={i}
+                src={c.logo}
+                alt={i >= CLIENTS.length ? "" : `${c.name} logo`}
+                aria-hidden={i >= CLIENTS.length}
+                width={240}
+                height={120}
+                className="h-9 w-auto shrink-0 opacity-60 grayscale hover:opacity-100 hover:grayscale-0 transition-all"
+              />
+            ) : (
+              <span
+                key={i}
+                aria-hidden={i >= CLIENTS.length}
+                className="font-display text-[1.12rem] uppercase tracking-[0.18em] whitespace-nowrap text-muted opacity-60 hover:opacity-100 hover:text-ink transition-all"
+              >
+                {c.name}
+              </span>
+            )
+          )}
         </div>
       </div>
     </section>
@@ -39,7 +51,22 @@ export function WorkCard({ cs, delay = 0 }: { cs: CaseStudy; delay?: number }) {
         href={`/work/${cs.slug}`}
         className="group relative block aspect-4/5 overflow-hidden rounded-md bg-surface"
       >
-        {cs.image ? (
+        {cs.logo ? (
+          <div className="absolute inset-0 flex items-center justify-center p-8 bg-[radial-gradient(120%_90%_at_20%_10%,var(--color-accent-soft),transparent_60%),linear-gradient(160deg,var(--color-surface-2),var(--color-bg))]">
+            {/* Logos carry their own background (Anthem white, iHeart black), so the
+                tile just clips them — no forced white plate. */}
+            <span className="w-[74%] max-w-[230px] rounded-xl overflow-hidden flex items-center justify-center shadow-[0_10px_40px_rgba(0,0,0,0.35)] transition-transform duration-700 group-hover:scale-[1.05]">
+              <Image
+                src={cs.logo}
+                alt={`${cs.client} logo`}
+                width={230}
+                height={230}
+                sizes="(max-width: 720px) 60vw, 20vw"
+                className="object-contain w-full h-auto"
+              />
+            </span>
+          </div>
+        ) : cs.image ? (
           <div className="absolute inset-0 animate-cardpan">
             <Image
               src={cs.image}
@@ -48,19 +75,6 @@ export function WorkCard({ cs, delay = 0 }: { cs: CaseStudy; delay?: number }) {
               sizes="(max-width: 720px) 92vw, (max-width: 960px) 46vw, 30vw"
               className="object-cover grayscale contrast-105 scale-[1.01] transition-all duration-700 group-hover:grayscale-0 group-hover:scale-[1.07]"
             />
-          </div>
-        ) : cs.logo ? (
-          <div className="absolute inset-0 flex items-center justify-center p-8 bg-[radial-gradient(120%_90%_at_20%_10%,var(--color-accent-soft),transparent_60%),linear-gradient(160deg,var(--color-surface-2),var(--color-bg))]">
-            <span className="w-[74%] max-w-[230px] rounded-xl bg-white flex items-center justify-center px-6 py-8 shadow-[0_10px_40px_rgba(0,0,0,0.35)] transition-transform duration-700 group-hover:scale-[1.05]">
-              <Image
-                src={cs.logo}
-                alt={`${cs.client} logo`}
-                width={230}
-                height={150}
-                sizes="(max-width: 720px) 60vw, 20vw"
-                className="object-contain w-full h-auto"
-              />
-            </span>
           </div>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center p-6 bg-[radial-gradient(120%_90%_at_20%_10%,var(--color-accent-soft),transparent_60%),linear-gradient(160deg,var(--color-surface-2),var(--color-bg))]">

@@ -61,6 +61,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     categoryLabel: "Media",
     year: "2024",
     image: "/img/iheart.jpg",
+    logo: "/img/iheartradio.png",
     summary:
       "Daily and overnight podcast editing featuring A-list celebrities for one of the largest audio networks in America.",
     challenge:
