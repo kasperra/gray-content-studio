@@ -181,6 +181,9 @@ export type Package = {
   tagline: string;
   includes: string[];
   note: string;
+  /** Matching preset in modules/pricing/bundles.ts — loads this package into
+      the public calculator and the admin proposal builder. */
+  bundleId: string;
 };
 
 /* Package examples guide visitors into the calculator — prices assembled from the real rate card. */
@@ -196,6 +199,7 @@ export const PACKAGES: Package[] = [
       "Thumbnail design",
     ],
     note: "Ideal for restaurants, gyms, and local brands building presence.",
+    bundleId: "social-starter",
   },
   {
     name: "Brand Builder",
@@ -209,6 +213,7 @@ export const PACKAGES: Package[] = [
       "4–8 Cutdowns for social + 4K masters",
     ],
     note: "Ideal for companies ready to look like the market leader.",
+    bundleId: "brand-builder",
   },
   {
     name: "Campaign Engine",
@@ -223,6 +228,7 @@ export const PACKAGES: Package[] = [
       "Platform variants, testimonial cutdowns, ad versions",
     ],
     note: "Ideal for product launches, seasonal pushes, and paid media.",
+    bundleId: "campaign-engine",
   },
 ];
 

@@ -1,14 +1,19 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { EstimateBuilder, emptyBuilderState, type BuilderState } from "@/modules/pricing/EstimateBuilder";
+import { EstimateBuilder, type BuilderState } from "@/modules/pricing/EstimateBuilder";
 import { saveDraft } from "@/modules/pricing/estimate-link";
 
-export function PublicCalculator() {
+/** Controlled by PricingPackages so a package card can load its services here. */
+export function PublicCalculator({
+  state,
+  onChange,
+}: {
+  state: BuilderState;
+  onChange: (next: BuilderState) => void;
+}) {
   const router = useRouter();
-  const [state, setState] = useState<BuilderState>(emptyBuilderState());
 
   const requestQuote = () => {
     saveDraft({
@@ -23,7 +28,7 @@ export function PublicCalculator() {
     <EstimateBuilder
       mode="public"
       state={state}
-      onChange={setState}
+      onChange={onChange}
       sidebar={(estimate) => (
         <div className="mt-6 grid gap-3">
           {estimate.items.length > 0 ? (
