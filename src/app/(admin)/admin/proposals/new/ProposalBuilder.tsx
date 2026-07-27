@@ -8,6 +8,7 @@ import {
 } from "@/modules/pricing/EstimateBuilder";
 import type { RushId } from "@/modules/pricing/data";
 import { computeEstimate } from "@/modules/pricing/compute";
+import { BUNDLES, getBundle, type Bundle } from "@/modules/pricing/bundles";
 import { saveProposal, type ProposalDetails } from "@/modules/proposals/actions";
 
 export type LoadedProposal = ProposalDetails & {
@@ -40,21 +41,30 @@ export function ProposalBuilder({
   loaded,
   prefill,
   fromLead,
+  bundleId,
 }: {
   loaded?: LoadedProposal;
   prefill: { clientName: string; company: string; email: string };
   fromLead?: FromLead;
+  bundleId?: string;
 }) {
+  const initialBundle = !loaded && !fromLead?.items.length ? getBundle(bundleId ?? "") : undefined;
+
   const [details, setDetails] = useState<ProposalDetails>({
     clientName: loaded?.clientName ?? prefill.clientName,
     company: loaded?.company ?? prefill.company,
     email: loaded?.email ?? prefill.email,
-    title: loaded?.title ?? "",
-    notes: loaded?.notes ?? "",
+    title: loaded?.title ?? initialBundle?.name ?? "",
+    notes: loaded?.notes ?? initialBundle?.notes ?? "",
     validUntil: loaded?.validUntil ?? "",
   });
 
+  const [appliedBundle, setAppliedBundle] = useState<string | undefined>(initialBundle?.id);
+
   const [state, setState] = useState<BuilderState>(() => {
+    if (initialBundle) {
+      return { ...emptyBuilderState(), selections: { ...initialBundle.selections } };
+    }
     if (loaded) {
       return {
         selections: Object.fromEntries(loaded.items.map((i) => [i.id, i.qty])),
@@ -99,6 +109,24 @@ export function ProposalBuilder({
     localStorage.setItem(OVERRIDES_KEY, JSON.stringify(next));
   };
 
+  /** Load a package preset. Replaces the service selections; only fills title and
+      notes when they're untouched (empty or still another bundle's boilerplate),
+      so typed copy is never clobbered. */
+  const applyBundle = (b: Bundle) => {
+    setState({ ...state, selections: { ...b.selections } });
+    setAppliedBundle(b.id);
+    setDetails((d) => {
+      const titleIsBoilerplate = !d.title || BUNDLES.some((x) => x.name === d.title);
+      const notesAreBoilerplate = !d.notes || BUNDLES.some((x) => x.notes === d.notes);
+      return {
+        ...d,
+        title: titleIsBoilerplate ? b.name : d.title,
+        notes: notesAreBoilerplate ? b.notes : d.notes,
+      };
+    });
+    setMessage({ ok: true, text: `${b.name} loaded — adjust quantities as needed.` });
+  };
+
   const save = () => {
     const estimate = computeEstimate({ ...state, priceOverrides: overrides });
     startTransition(async () => {
@@ -127,6 +155,40 @@ export function ProposalBuilder({
       <h1 className="font-display text-[1.6rem] font-semibold mb-6">
         {savedId ? "Edit Proposal" : "New Proposal"}
       </h1>
+
+      <section className="bg-surface border border-rule rounded-lg p-6 mb-8">
+        <h2 className="font-display text-[1.15rem] font-semibold">Start from a Package</h2>
+        <p className="text-muted text-[0.88rem] mt-1.5 max-w-[70ch]">
+          Loads every service in that bundle at its starting quantities. Everything stays editable —
+          adjust, add, or remove line items before saving.
+        </p>
+        <div className="grid sm:grid-cols-3 gap-3 mt-5">
+          {BUNDLES.map((b) => {
+            const active = appliedBundle === b.id;
+            return (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => applyBundle(b)}
+                aria-pressed={active}
+                className={`text-left rounded-lg border p-4 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
+                  active
+                    ? "border-accent bg-accent-soft"
+                    : "border-rule hover:border-accent/60 hover:bg-bg/40"
+                }`}
+              >
+                <span className="block font-display text-[1.05rem] font-semibold">{b.name}</span>
+                <span className="block text-accent text-[0.82rem] font-semibold mt-0.5">{b.from}</span>
+                <span className="block text-muted text-[0.82rem] mt-2">{b.tagline}</span>
+                <span className="block text-muted/70 text-[0.75rem] mt-2">
+                  {Object.keys(b.selections).length} services
+                  {active ? " · loaded" : ""}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
       <section className="bg-surface border border-rule rounded-lg p-6 mb-8">
         <h2 className="font-display text-[1.15rem] font-semibold mb-4">Client &amp; Project</h2>

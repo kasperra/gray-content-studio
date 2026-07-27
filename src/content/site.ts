@@ -191,7 +191,7 @@ export const PACKAGES: Package[] = [
     tagline: "A month of scroll-stopping short-form content.",
     includes: [
       "Half-day videography shoot",
-      "4 platform-native reels or shorts",
+      "4–8 platform-native reels or shorts",
       "Captions + vertical versions",
       "Thumbnail design",
     ],
@@ -202,10 +202,11 @@ export const PACKAGES: Package[] = [
     price: "from $3,800",
     tagline: "The film that defines how customers see you.",
     includes: [
+      "Everything in Social Starter",
       "Brand story video (2–3 min)",
       "Full-day production with lighting & audio",
       "Advanced editing, color grade, motion graphics",
-      "Cutdowns for social + 4K masters",
+      "4–8 Cutdowns for social + 4K masters",
     ],
     note: "Ideal for companies ready to look like the market leader.",
   },
@@ -214,9 +215,11 @@ export const PACKAGES: Package[] = [
     price: "from $6,500",
     tagline: "A full commercial campaign, concept to distribution.",
     includes: [
+      "Everything in Brand Builder",
       "30–60 sec commercial",
       "Creative strategy + script + storyboard",
       "Multi-day production incl. drone",
+      "Advanced editing, color grade, and motion graphics",
       "Platform variants, testimonial cutdowns, ad versions",
     ],
     note: "Ideal for product launches, seasonal pushes, and paid media.",

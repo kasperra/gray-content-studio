@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { money } from "@/modules/pricing/data";
+import { BUNDLES } from "@/modules/pricing/bundles";
 import { ProposalRowActions } from "./ProposalRowActions";
 
 export default async function ProposalsPage() {
@@ -21,6 +22,23 @@ export default async function ProposalsPage() {
         >
           New Proposal
         </Link>
+      </div>
+
+      {/* One-click starts from the three public packages */}
+      <div className="flex flex-wrap items-center gap-2.5 mb-8">
+        <span className="text-muted text-[0.78rem] font-semibold uppercase tracking-[0.14em] mr-1">
+          Start from
+        </span>
+        {BUNDLES.map((b) => (
+          <Link
+            key={b.id}
+            href={`/admin/proposals/new?bundle=${b.id}`}
+            className="rounded-full border border-rule text-[0.82rem] font-medium px-4 py-1.5 text-muted hover:text-accent hover:border-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+          >
+            {b.name}
+            <span className="text-muted/60"> · {Object.keys(b.selections).length} services</span>
+          </Link>
+        ))}
       </div>
 
       {!proposals?.length ? (

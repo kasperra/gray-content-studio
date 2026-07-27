@@ -70,6 +70,12 @@ export function ProposalRowActions({
             {copied ? "Copied!" : "Link"}
           </button>
           <a
+            href={`/admin/proposals/${id}/sow`}
+            className="rounded border border-rule text-[0.78rem] font-medium px-3 py-1.5 text-muted hover:text-accent hover:border-accent transition-colors"
+          >
+            SOW
+          </a>
+          <a
             href={`/admin/proposals/new?edit=${id}`}
             className="rounded border border-rule text-[0.78rem] font-medium px-3 py-1.5 text-muted hover:text-accent hover:border-accent transition-colors"
           >

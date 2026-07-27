@@ -75,5 +75,9 @@ export default async function NewProposalPage({
     email: fromLead?.email ?? (typeof params.email === "string" ? params.email : ""),
   };
 
-  return <ProposalBuilder loaded={loaded} prefill={prefill} fromLead={fromLead} />;
+  const bundleId = typeof params.bundle === "string" ? params.bundle : undefined;
+
+  return (
+    <ProposalBuilder loaded={loaded} prefill={prefill} fromLead={fromLead} bundleId={bundleId} />
+  );
 }
