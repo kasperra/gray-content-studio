@@ -28,8 +28,11 @@ export type Bundle = {
   notes: string;
 };
 
-/** The social deliverables every tier carries, at the low end of "4–8". */
+/** The social deliverables every tier carries, at the low end of "4–8".
+    Lives in the shared layer so the higher cards' "Everything in Social
+    Starter" promise stays literally true. */
 const SOCIAL_LAYER: Record<string, number> = {
+  starterstrat: 1, // strategy session that opens the engagement
   reeledit: 4, // platform-native reels/shorts cut from the shoot
   captions: 4,
   vertical: 4,

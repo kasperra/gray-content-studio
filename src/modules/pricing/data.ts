@@ -11,6 +11,7 @@ export const PRICING_CATEGORIES: Category[] = [
     services: [
       { id: "consult", name: "Pre-Production Consultation", unit: "Project", price: 150 },
       { id: "creative", name: "Creative Strategy Session", unit: "Project", price: 250 },
+      { id: "starterstrat", name: "Social Starter Strategy Session", unit: "Session", price: 60 },
       { id: "branddisc", name: "Brand Discovery Meeting", unit: "Project", price: 200 },
       { id: "mktstrat", name: "Marketing Strategy Development", unit: "Project", price: 350 },
       { id: "calendar", name: "Content Calendar Planning", unit: "Month", price: 300 },
