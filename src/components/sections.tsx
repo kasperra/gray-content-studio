@@ -17,27 +17,17 @@ export function TrustedBy() {
       <Eyebrow className="text-center mb-10">Trusted By</Eyebrow>
       <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)] group">
         <div className="flex items-center gap-[4.5rem] w-max animate-marquee group-hover:[animation-play-state:paused]">
-          {marks.map((c, i) =>
-            c.logo ? (
-              <Image
-                key={i}
-                src={c.logo}
-                alt={i >= CLIENTS.length ? "" : `${c.name} logo`}
-                aria-hidden={i >= CLIENTS.length}
-                width={240}
-                height={120}
-                className="h-9 w-auto shrink-0 opacity-60 grayscale hover:opacity-100 hover:grayscale-0 transition-all"
-              />
-            ) : (
-              <span
-                key={i}
-                aria-hidden={i >= CLIENTS.length}
-                className="font-display text-[1.12rem] uppercase tracking-[0.18em] whitespace-nowrap text-muted opacity-60 hover:opacity-100 hover:text-ink transition-all"
-              >
-                {c.name}
-              </span>
-            )
-          )}
+          {marks.map((c, i) => (
+            <Image
+              key={i}
+              src={c.logo}
+              alt={i >= CLIENTS.length ? "" : `${c.name} logo`}
+              aria-hidden={i >= CLIENTS.length}
+              width={240}
+              height={120}
+              className="h-9 w-auto shrink-0 opacity-60 grayscale hover:opacity-100 hover:grayscale-0 transition-all"
+            />
+          ))}
         </div>
       </div>
     </section>

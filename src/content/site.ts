@@ -5,21 +5,21 @@
    with real client quotes before launch marketing pushes.
    ============================================================ */
 
-/* Marquee entries — `logo` renders as an image (transparent PNG on the dark bg);
-   entries without one render as text. */
-export const CLIENTS: { name: string; logo?: string }[] = [
+/* Marquee entries — every one carries a logo (transparent PNG, white artwork
+   on the dark bg). Text-only entries were dropped: a bare name reads as a
+   placeholder next to real logos. Add a logo file to add a client back. */
+export const CLIENTS: { name: string; logo: string }[] = [
   { name: "ExxonMobil", logo: "/img/trusted/exxonmobil.png" },
   { name: "Anthem", logo: "/img/trusted/anthem.png" },
-  { name: "Dominion Energy" },
+  { name: "Dominion Energy", logo: "/img/trusted/dominion-energy.png" },
   { name: "iHeartRadio", logo: "/img/trusted/iheartradio.png" },
   { name: "LL Flooring", logo: "/img/trusted/ll-flooring.png" },
   { name: "1MD Nutrition", logo: "/img/trusted/1md.png" },
   { name: "Hair La Vie", logo: "/img/trusted/hair-la-vie.png" },
-  { name: "VPAP" },
+  { name: "VPAP", logo: "/img/trusted/vpap.png" },
   { name: "Essential Elements", logo: "/img/trusted/essential-elements.png" },
-  { name: "Gigantic" },
-  { name: "CCWA" },
-  { name: "Visit Tappahannock" },
+  { name: "Gigantic", logo: "/img/trusted/gigantic.png" },
+  { name: "CCWA", logo: "/img/trusted/ccwa.png" },
 ];
 
 export const SERVICES = [
