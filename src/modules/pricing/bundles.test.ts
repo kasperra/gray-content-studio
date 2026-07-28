@@ -54,10 +54,23 @@ for (const bundle of BUNDLES) {
 }
 
 // Each tier must genuinely contain the one below it — the cards promise it.
+// The exceptions are entry-tier lines the higher tiers cover with their own,
+// heavier equivalents; carrying them up would double-bill the client.
+const STARTER_ONLY: Record<string, string> = {
+  videohalf: "superseded by the brand film's all-inclusive production",
+  starterstrat: "higher tiers bill their own strategy work (Campaign Engine: Creative Strategy Session)",
+};
+
 const [starter, builder, engine] = BUNDLES;
 for (const id of Object.keys(starter.selections)) {
-  if (id === "videohalf") continue; // superseded by the brand film's own production
+  if (STARTER_ONLY[id]) continue;
   assert.ok(builder.selections[id], `Brand Builder is missing Social Starter's "${id}"`);
+}
+
+// A starter-only line must not reappear upstream — that's the double-bill.
+for (const id of Object.keys(STARTER_ONLY)) {
+  assert.ok(!builder.selections[id], `Brand Builder double-bills "${id}": ${STARTER_ONLY[id]}`);
+  assert.ok(!engine.selections[id], `Campaign Engine double-bills "${id}": ${STARTER_ONLY[id]}`);
 }
 for (const id of Object.keys(builder.selections)) {
   assert.ok(engine.selections[id], `Campaign Engine is missing Brand Builder's "${id}"`);

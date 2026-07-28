@@ -28,18 +28,21 @@ export type Bundle = {
   notes: string;
 };
 
-/** The social deliverables every tier carries, at the low end of "4–8".
-    Lives in the shared layer so the higher cards' "Everything in Social
-    Starter" promise stays literally true. */
+/** The social deliverables every tier carries, at the low end of "4–8". */
 const SOCIAL_LAYER: Record<string, number> = {
-  starterstrat: 1, // strategy session that opens the engagement
   reeledit: 4, // platform-native reels/shorts cut from the shoot
   captions: 4,
   vertical: 4,
   thumbnail: 4,
 };
 
+/** starterstrat is the entry-tier planning session, so it stays scoped to this
+    package. The higher tiers do their creative planning through their own,
+    heavier line items (Campaign Engine bills a Creative Strategy Session at
+    $250) — carrying this one up would put two strategy sessions on the same
+    proposal. */
 const SOCIAL_STARTER: Record<string, number> = {
+  starterstrat: 1, // strategy session that opens the engagement
   videohalf: 1, // half-day videography shoot
   ...SOCIAL_LAYER,
 };
