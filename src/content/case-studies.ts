@@ -60,8 +60,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     category: "media",
     categoryLabel: "Media",
     year: "2024",
-    image: "/img/iheart.jpg",
-    logo: "/img/iheartradio.png",
+    image: "/img/work/iheartradio.jpg",
     summary:
       "Daily and overnight podcast editing featuring A-list celebrities for one of the largest audio networks in America.",
     challenge:
@@ -141,7 +140,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     category: "corporate",
     categoryLabel: "Corporate",
     year: "2025–2026",
-    logo: "/img/anthem-logo.jpeg",
+    image: "/img/work/anthem.jpg",
     summary:
       "Social media advertising that translates complex healthcare messaging into clear, human, short-form video.",
     challenge:
@@ -167,7 +166,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     category: "corporate",
     categoryLabel: "Corporate",
     year: "2024–2025",
-    image: "/img/dominion.avif",
+    image: "/img/work/dominion-energy.jpg",
     summary:
       "Short-form video for brand and internal communications — employee spotlights, event promos, and community campaigns.",
     challenge:
@@ -246,7 +245,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     category: "ecommerce",
     categoryLabel: "E-commerce",
     year: "2021",
-    image: "/img/hairlavie.jpg",
+    image: "/img/work/hair-la-vie.jpg",
     summary:
       "A 60-second 'How To: Lash24' video spun into a full micro-content series for Amazon and social.",
     challenge:
@@ -312,6 +311,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     category: "nonprofit",
     categoryLabel: "Nonprofit",
     year: "2024",
+    image: "/img/work/ccwa.jpg",
     summary:
       "Feature videos showcasing student and program stories for workforce education.",
     challenge:
@@ -331,7 +331,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     category: "nonprofit",
     categoryLabel: "Nonprofit",
     year: "2024",
-    image: "/img/tappahannock.avif",
+    image: "/img/work/visit-tappahannock.jpg",
     summary:
       "Promotional tourism content highlighting local attractions and businesses.",
     challenge:
@@ -349,7 +349,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     category: "media",
     categoryLabel: "Media",
     year: "2023",
-    image: "/img/gigantic.jpg",
+    image: "/img/work/gigantic.jpg",
     summary:
       "Course trailers, founder interviews, and social content for Web3, NFT, and AI education.",
     challenge:
