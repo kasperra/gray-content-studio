@@ -43,3 +43,7 @@ yarn-error.log*
 /trusted by/
 /Portfolio Images.zip
 /Work Images/
+
+# Python
+__pycache__/
+*.pyc
