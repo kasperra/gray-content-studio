@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseAdmin, supabaseConfigured } from "@/lib/supabase/server";
 import { diagnose, stageMeta } from "./scoring";
 import { QUESTIONS } from "./questions";
+import { DEFAULT_BOOKING_URL } from "./content";
+import { renderDiagnosticEmail, sendDiagnosticEmail } from "./email";
 import type { Answers, Result } from "./types";
 
 /* All diagnostic writes happen here, server-side, through the service-role
@@ -107,6 +109,18 @@ export async function captureLead(
   const trim = (v: string | undefined, max: number) => (v ?? "").trim().slice(0, max) || null;
 
   const admin = createSupabaseAdmin();
+
+  // Read first: we need the answers to build the email, and email_captured_at
+  // tells us whether this is the first capture. Re-submitting the form must not
+  // send a second copy.
+  const { data: row } = await admin
+    .from("diagnostic_results")
+    .select("answers, email_captured_at")
+    .eq("public_id", publicId)
+    .single();
+  if (!row) return { ok: false, message: "We couldn't find that diagnosis." };
+  const alreadySent = Boolean(row.email_captured_at);
+
   const { error } = await admin
     .from("diagnostic_results")
     .update({
@@ -121,6 +135,28 @@ export async function captureLead(
   if (error) return { ok: false, message: "We couldn't save your details. Please try again." };
 
   await track("capture", { resultPublicId: publicId });
+
+  // The lead is already saved at this point. Delivery is best-effort from here:
+  // a bounced or unconfigured mailer must never fail the capture, because the
+  // roadmap is shown on screen regardless.
+  if (!alreadySent) {
+    try {
+      const result = diagnose((row.answers ?? {}) as Answers);
+      const meta = stageMeta(result.stage);
+      const config = await getConfig();
+      const message = renderDiagnosticEmail({
+        result,
+        publicId,
+        name: trim(contact.name, 120),
+        ctaLabel: config[`cta_stage_${result.stage}`] ?? meta.cta,
+        bookingUrl: config.booking_url ?? DEFAULT_BOOKING_URL,
+      });
+      await sendDiagnosticEmail(email, message);
+    } catch (err) {
+      console.error("[diagnostic] result email failed", err);
+    }
+  }
+
   return { ok: true, message: "Sent. Your full roadmap is below." };
 }
 

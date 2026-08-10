@@ -72,4 +72,6 @@ Push to `main` → Vercel auto-builds and deploys. Environment variables (`NEXT_
 
 ## Explicitly out of scope (flagged, not built)
 
-Per the project's cost guardrails (free tiers only, no paid APIs/AI/realtime): outbound email automation, e-signatures, Stripe/payments, social-publishing APIs, and video transcoding are intentionally **not** implemented. The schema and module boundaries accommodate them, but do not add them without the user's explicit approval. Follow-up "reminders" and analytics are computed/in-app only — there is no email side effect.
+Per the project's cost guardrails (free tiers only, no paid APIs/AI/realtime): e-signatures, Stripe/payments, social-publishing APIs, and video transcoding are intentionally **not** implemented. The schema and module boundaries accommodate them, but do not add them without the user's explicit approval. Follow-up "reminders" and analytics are computed/in-app only — there is no email side effect.
+
+**One exception, approved and built:** the Content Growth Diagnostic sends a result email via Resend (`src/modules/diagnostic/email.ts`, free tier, plain `fetch` — no SDK dependency). It is the only outbound email in the project. It is strictly opt-in on env (`RESEND_API_KEY` + `DIAGNOSTIC_FROM_EMAIL`); with those unset the diagnostic still captures leads and simply doesn't send. Sending is best-effort and wrapped so a delivery failure can never fail a lead capture. Do not add further outbound email without asking.
