@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { visibleQuestions, plannedTotal } from "@/modules/diagnostic/questions";
-import { submitDiagnostic, captureLead, track } from "@/modules/diagnostic/actions";
+import { submitDiagnostic, captureLead } from "@/modules/diagnostic/actions";
+import { beacon } from "@/modules/diagnostic/beacon";
 import { ResultReport } from "@/modules/diagnostic/ResultReport";
 import { stageMeta } from "@/modules/diagnostic/scoring";
 import type { Answers, Result } from "@/modules/diagnostic/types";
 
-type Phase = "quiz" | "analyzing" | "result";
+type Phase = "quiz" | "analyzing" | "result" | "error";
 
 const ANALYSIS_STEPS = [
   "Content maturity analyzed",
@@ -54,7 +55,7 @@ export function DiagnosticFlow({
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
-    void track("start", { sessionId });
+    beacon("start", { sessionId });
   }, [sessionId]);
 
   // Move focus to the new question so keyboard and screen-reader users follow
@@ -73,23 +74,35 @@ export function DiagnosticFlow({
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const tick = reduce ? 120 : 620;
 
-    // The analysis screen runs while the request is genuinely in flight — the
-    // checkmarks describe work the server is actually doing, not theatre on a timer.
+    // The checkmarks pace while the request is genuinely in flight.
     const pacer = setInterval(() => setAnalysisStep((s) => Math.min(s + 1, ANALYSIS_STEPS.length)), tick);
-    const res = await submitDiagnostic(finalAnswers);
-    const settle = new Promise((r) => setTimeout(r, reduce ? 0 : 900));
-    await settle;
-    clearInterval(pacer);
-    setAnalysisStep(ANALYSIS_STEPS.length);
+    try {
+      // A hung request must surface as a retryable error, never as a screen that
+      // sits on "Your diagnosis is ready" forever.
+      const res = await Promise.race([
+        submitDiagnostic(finalAnswers),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("timeout")), 25_000)
+        ),
+      ]);
 
-    if (!res.ok || !res.result) {
-      setError(res.message);
-      setPhase("quiz");
-      return;
+      if (!reduce) await new Promise((r) => setTimeout(r, 900));
+      setAnalysisStep(ANALYSIS_STEPS.length);
+
+      if (!res.ok || !res.result) {
+        setError(res.message || "We couldn't complete your diagnosis.");
+        setPhase("error");
+        return;
+      }
+      setResult(res.result);
+      setPublicId(res.publicId);
+      setTimeout(() => setPhase("result"), reduce ? 0 : 500);
+    } catch {
+      setError("We couldn't reach the diagnostic service. Your answers are safe — try again.");
+      setPhase("error");
+    } finally {
+      clearInterval(pacer);
     }
-    setResult(res.result);
-    setPublicId(res.publicId);
-    setTimeout(() => setPhase("result"), reduce ? 0 : 500);
   }, []);
 
   const choose = useCallback(
@@ -97,7 +110,7 @@ export function DiagnosticFlow({
       if (!question) return;
       const next = { ...answers, [question.id]: optionId };
       setAnswers(next);
-      void track("question", { sessionId, step: question.id });
+      beacon("question", { sessionId, step: question.id });
 
       const remaining = visibleQuestions(next);
       const at = remaining.findIndex((q) => q.id === question.id);
@@ -129,6 +142,22 @@ export function DiagnosticFlow({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [phase, question, step, choose]);
+
+  if (phase === "error") {
+    return (
+      <div className="w-[min(560px,92vw)] mx-auto py-24 sm:py-32">
+        <p className="font-display text-[1.4rem] font-semibold">We couldn&apos;t finish your diagnosis.</p>
+        <p role="alert" className="text-muted text-[0.97rem] mt-3 leading-relaxed">{error}</p>
+        <button
+          type="button"
+          onClick={() => void runAnalysis(answers)}
+          className="mt-7 rounded-full bg-accent text-bg border border-accent font-semibold uppercase text-[0.85rem] tracking-[0.08em] px-[2em] py-[0.85em] transition-all duration-200 hover:bg-transparent hover:text-accent cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
 
   if (phase === "analyzing") {
     return (
@@ -175,7 +204,7 @@ export function DiagnosticFlow({
           ctaLabel={ctaByStage[result.stage] ?? stageMeta(result.stage).cta}
           bookingUrl={bookingUrl}
           footerCopy={footerCopy}
-          onCtaClick={() => void track("cta_click", { sessionId, resultPublicId: publicId })}
+          onCtaClick={() => beacon("cta_click", { sessionId, resultPublicId: publicId })}
         />
 
         {!captured && (
