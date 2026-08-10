@@ -15,8 +15,10 @@ import shutil
 from pathlib import Path
 
 OUT = Path(__file__).parent / "png"
+JPG = Path(__file__).parent / "jpg"
 TMP = Path(__file__).parent / ".html"
 CHROME = "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell"
+FFMPEG = "/opt/pw-browsers/ffmpeg-1011/ffmpeg-linux"
 
 # --- tokens: mirror of src/app/globals.css @theme -------------------------
 BG = "#0b0b0c"
@@ -180,6 +182,40 @@ def fb_card(eyebrow, headline, sub, logos):
     """)
 
 
+def square_credentials(eyebrow, headline, sub, logos):
+    """1:1 anchor card for Instagram, 1080x1080. Same argument as fb_card, but
+    the taller canvas lets the client chips breathe over two rows."""
+    chips = "".join(f'<span class="chip">{l}</span>' for l in logos)
+    return page(SQ, SQ, f"""
+      .grid {{ height:100%; padding:88px; display:grid;
+        grid-template-rows:auto 1fr auto; }}
+      .eyebrow {{ font-size:24px; letter-spacing:.22em; }}
+      .body {{ display:flex; flex-direction:column; justify-content:center;
+        min-height:0; }}
+      .headline {{ font-size:86px; max-width:14ch; }}
+      .sub {{ font-size:30px; color:{MUTED}; margin-top:32px; max-width:27ch;
+        line-height:1.45; }}
+      .chips {{ display:flex; flex-wrap:wrap; gap:12px; max-width:100%; }}
+      .chip {{ border:1px solid {RULE}; border-radius:999px; padding:11px 22px;
+        font-size:20px; color:{INK}; opacity:.86; }}
+      .rule {{ margin:0 0 28px 0; }}
+      .wordmark {{ font-size:19px; padding-top:26px; }}
+    """, f"""
+      <div class="grid">
+        <div class="eyebrow">{eyebrow}</div>
+        <div class="body">
+          <h1 class="headline display">{headline}</h1>
+          <p class="sub">{sub}</p>
+        </div>
+        <div>
+          <div class="rule"></div>
+          <div class="chips">{chips}</div>
+          <div class="wordmark">graycontentstudio.co</div>
+        </div>
+      </div>
+    """)
+
+
 def reel_frame(label, headline, sub):
     """Vertical reel title/cover frame, 1080x1920."""
     return page(1080, 1920, f"""
@@ -239,6 +275,14 @@ ASSETS = {
         "Short form", "The 3-second", "hook, explained",
         stat=("1.5s", "to earn the next second"))),
 
+    # Instagram 1:1 anchor card — same wedge, square for the IG feed
+    "ig-credentials": (SQ, SQ, square_credentials(
+        "Richmond, Virginia",
+        "Broadcast-grade video. Small-business pricing.",
+        "Campaign work for Fortune 500 brands — now building content engines "
+        "for Richmond businesses. From $1,400/month.",
+        ["ExxonMobil", "Anthem", "Dominion Energy", "iHeartRadio", "LL Flooring"])),
+
     # Facebook / OG card: the credential-asymmetry wedge
     "fb-credentials": (1200, 630, fb_card(
         "Richmond, Virginia",
@@ -257,8 +301,28 @@ ASSETS = {
 }
 
 
+def to_jpeg(png: Path) -> Path | None:
+    """Instagram's Graph API documents JPEG-only source URLs, so mirror every
+    PNG as a high-quality JPEG.
+
+    Note: the ffmpeg bundled with Playwright cannot do this — that build ships a
+    PNG *encoder* but no PNG decoder, so it rejects our own output. Pillow it is.
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        print("  Pillow missing — run: pip install Pillow")
+        return None
+    jpg = JPG / f"{png.stem}.jpg"
+    # flatten onto the brand ground; JPEG has no alpha channel
+    im = Image.open(png).convert("RGB")
+    im.save(jpg, "JPEG", quality=92, optimize=True, progressive=True)
+    return jpg if jpg.exists() and jpg.stat().st_size > 1000 else None
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
+    JPG.mkdir(parents=True, exist_ok=True)
     TMP.mkdir(parents=True, exist_ok=True)
     ok, fail = [], []
     for name, (w, h, html) in ASSETS.items():
@@ -275,7 +339,9 @@ def main():
             f"--window-size={w},{h}", f"--screenshot={png}", f"file://{f}",
         ], capture_output=True, text=True, timeout=90)
         if png.exists() and png.stat().st_size > 1000:
-            ok.append(f"{name}.png  {w}x{h}  {png.stat().st_size//1024}KB")
+            j = to_jpeg(png)
+            jn = f"  + {j.stat().st_size//1024}KB jpg" if j else "  (no jpg)"
+            ok.append(f"{name}  {w}x{h}  {png.stat().st_size//1024}KB png{jn}")
         else:
             fail.append(f"{name}: {r.stderr.strip()[:200]}")
     shutil.rmtree(TMP, ignore_errors=True)

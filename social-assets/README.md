@@ -27,6 +27,18 @@ curl -sSL -o Hanken-600.ttf   "$(curl -s 'https://fonts.googleapis.com/css2?fami
 fc-cache -f
 ```
 
+Output is written twice: `png/` (lossless, for anything you edit further) and
+`jpg/` (quality 92, progressive). **Instagram's Graph API documents JPEG-only
+source URLs**, so the JPEG mirror is what gets published. Requires Pillow:
+
+```bash
+pip install Pillow
+```
+
+Do not reach for the ffmpeg bundled with Playwright to do this conversion — that
+build ships a PNG *encoder* but no PNG *decoder*, so it rejects the very files
+this script produces.
+
 ## Renderer gotcha
 
 `build.py` uses `headless_shell`, **not** `chrome --headless=new`. The latter
@@ -39,6 +51,7 @@ wordmark is visible before shipping anything.
 
 | File | Size | Use |
 |---|---|---|
+| `ig-credentials.png` | 1080×1080 | Instagram anchor post — square cut of the credentials card |
 | `ig-carousel-1..5.png` | 1080×1080 | Instagram carousel — sells the monthly bundle |
 | `yt-cost.png` | 1280×720 | Thumbnail for the video-production-cost post |
 | `yt-brandfilm.png` | 1280×720 | Thumbnail for the brand-film post |
