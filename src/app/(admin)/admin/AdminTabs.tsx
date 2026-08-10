@@ -16,6 +16,7 @@ const tabs = [
   { href: "/admin/social", label: "Social" },
   { href: "/admin/templates", label: "Templates" },
   { href: "/admin/analytics", label: "Analytics" },
+  { href: "/admin/diagnostic", label: "Diagnostic" },
 ];
 
 function isActive(pathname: string, href: string) {
