@@ -28,7 +28,10 @@ fc-cache -f
 ```
 
 Output is written twice: `png/` (lossless, for anything you edit further) and
-`jpg/` (quality 92, progressive). **Instagram's Graph API documents JPEG-only
+`jpg/` (quality 92, progressive). **Both directories are gitignored** — they are
+build output, so regenerate rather than expecting them in a fresh clone. The
+copies under `public/img/social/` *are* tracked, because Vercel serves those for
+Meta's fetchers to pull when publishing. **Instagram's Graph API documents JPEG-only
 source URLs**, so the JPEG mirror is what gets published. Requires Pillow:
 
 ```bash

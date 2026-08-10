@@ -47,3 +47,8 @@ yarn-error.log*
 # Python
 __pycache__/
 *.pyc
+
+# generated social assets — regenerate with: python3 social-assets/build.py
+# (public/img/social/ stays tracked: Vercel serves those for Meta to fetch)
+/social-assets/png/
+/social-assets/jpg/

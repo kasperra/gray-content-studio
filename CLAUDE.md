@@ -20,8 +20,8 @@ There is **no test suite**. Verification is done by building (`npm run build` ca
 
 - **Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS v4.** No `tailwind.config.js` — the entire design system lives in `@theme { … }` inside `src/app/globals.css` (colors like `--color-bg`, `--color-accent`, fonts, and keyframe animations). Use semantic Tailwind classes (`bg-bg`, `text-accent`, `border-rule`) rather than hex values.
 - **Middleware is `src/proxy.ts`, not `middleware.ts`.** Next 16 renamed the convention; the file exports `default async function proxy` and its `config.matcher` gates `/admin`, `/portal`, `/review`, and `/login`. Add any new authed route prefix to **both** `PROTECTED_PREFIXES` and `config.matcher`.
-- **Fonts:** Fraunces (display) + Inter (body) via `next/font` in `src/app/layout.tsx`. Fraunces must use `weight: "variable"` (it's a variable font with the `opsz` axis) — a numeric weight breaks the build.
-- **Design language:** cinematic dark editorial — near-black `#0b0b0c`, off-white text, single warm gold accent `#d4a24e`, Fraunces headlines. Preserve this when adding UI.
+- **Fonts:** Archivo (display, `--font-archivo`) + Hanken Grotesk (body, `--font-hanken`), both via `next/font/google` in `src/app/layout.tsx`. Archivo is the stand-in for the brand's "Horizon" display face — bold, wide, tight tracking.
+- **Design language:** cinematic dark editorial — near-black `#0b0b0c`, off-white ink `#f5f2ec`, a single warm accent **Tuscan Sun `#fac748`**, with **Rich Mahogany `#301509`** for depth (used as a radial ground glow). Archivo headlines at negative tracking. Preserve this when adding UI. `globals.css` is the source of truth for tokens — read it rather than trusting this summary.
 
 ## Architecture
 
