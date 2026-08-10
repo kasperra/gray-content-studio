@@ -14,7 +14,16 @@ npm run build    # production build — RUN THIS before committing; it type-chec
 npm run lint     # eslint (flat config, eslint-config-next)
 ```
 
-There is **no test suite**. Verification is done by building (`npm run build` catches all type errors) and by driving the running app in a browser against the real Supabase project. When verifying features that touch the database, seed data via the Supabase REST API with the service-role key, exercise the UI, assert against the DB, then delete the test rows.
+There is **no test runner** — no `npm test` script, no vitest/jest dependency. What exists instead is a small set of standalone `*.test.ts` check scripts written against `node:assert/strict` and run one at a time:
+
+```bash
+npx tsx src/modules/pricing/bundles.test.ts      # package presets vs advertised floors
+npx tsx src/modules/proposals/sow-phases.test.ts # SOW phase selection
+```
+
+**Nothing runs these automatically**, so they only catch regressions if you remember to invoke them. Run the relevant one after touching the rate card, the bundle presets, or SOW phase logic — `bundles.test.ts` guards a bug that shipped once already (a preset loading far above the "from" price the pricing card advertises).
+
+Otherwise verification is done by building (`npm run build` catches all type errors) and by driving the running app in a browser against the real Supabase project. When verifying features that touch the database, seed data via the Supabase REST API with the service-role key, exercise the UI, assert against the DB, then delete the test rows.
 
 ## Stack & non-obvious conventions
 
