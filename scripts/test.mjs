@@ -14,11 +14,13 @@
  */
 import { readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
-const ROOT = new URL("..", import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const SRC = join(ROOT, "src");
 const filter = process.argv[2];
+const TSX = join(ROOT, "node_modules", ".bin", process.platform === "win32" ? "tsx.cmd" : "tsx");
 
 function findChecks(dir) {
   const out = [];
@@ -43,9 +45,9 @@ const failed = [];
 for (const file of files) {
   const name = relative(ROOT, file);
   console.log(`\n[1m▸ ${name}[0m`);
-  // tsx resolves from node_modules/.bin, which npm puts on PATH for scripts.
-  // shell:true so the .cmd shim works on Windows too.
-  const { status } = spawnSync("tsx", [file], { stdio: "inherit", shell: true });
+  // Spawn the resolved binary directly. shell:true would re-split the argument
+  // on spaces, which breaks any checkout whose path contains one.
+  const { status } = spawnSync(TSX, [file], { stdio: "inherit" });
   if (status !== 0) failed.push(name);
 }
 
