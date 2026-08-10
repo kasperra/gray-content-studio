@@ -39,6 +39,13 @@ Do not reach for the ffmpeg bundled with Playwright to do this conversion — th
 build ships a PNG *encoder* but no PNG *decoder*, so it rejects the very files
 this script produces.
 
+## Instagram aspect ratio
+
+Instagram assets are **1080×1350 (4:5)**, not square. The profile grid crops 1:1
+posts to 4:5, trimming 108px off each side — which clipped the left-aligned type
+on the first version of these. Native 4:5 renders uncropped in both the feed and
+the grid, and occupies more vertical space in-feed.
+
 ## Renderer gotcha
 
 `build.py` uses `headless_shell`, **not** `chrome --headless=new`. The latter
@@ -51,8 +58,8 @@ wordmark is visible before shipping anything.
 
 | File | Size | Use |
 |---|---|---|
-| `ig-credentials.png` | 1080×1080 | Instagram anchor post — square cut of the credentials card |
-| `ig-carousel-1..5.png` | 1080×1080 | Instagram carousel — sells the monthly bundle |
+| `ig-credentials.png` | 1080×1350 | Instagram anchor post — square cut of the credentials card |
+| `ig-carousel-1..5.png` | 1080×1350 | Instagram carousel — sells the monthly bundle |
 | `yt-cost.png` | 1280×720 | Thumbnail for the video-production-cost post |
 | `yt-brandfilm.png` | 1280×720 | Thumbnail for the brand-film post |
 | `yt-shortform.png` | 1280×720 | Thumbnail for the short-form-strategy post |

@@ -65,12 +65,15 @@ def page(w: int, h: int, css: str, body: str) -> str:
 # COPY — edit here, then re-run
 # =========================================================================
 
-SQ = 1080  # Instagram square
+SQ = 1080   # Instagram width
+# Instagram crops 1:1 posts to 4:5 in the profile grid, trimming 108px from
+# each side and eating into left-aligned type. Build native 4:5 instead.
+IG_W, IG_H = 1080, 1350
 
 
 def carousel_slide(n, total, eyebrow, headline, sub, big=None, big_label=None,
                    footer=None):
-    """Instagram carousel slide, 1080x1080. Grid rows: header / body / footer."""
+    """Instagram carousel slide, 1080x1350 (4:5). Grid: header / body / footer."""
     if big:
         lab = f'<div class="biglab">{big_label}</div>' if big_label else ""
         body = (f'<div class="bigwrap"><div class="bignum display accent">{big}</div>'
@@ -82,9 +85,9 @@ def carousel_slide(n, total, eyebrow, headline, sub, big=None, big_label=None,
     if big and sub:
         body += f'<p class="sub muted">{sub}</p>'
     foot = footer or "graycontentstudio.co"
-    hsize = 96 if len(headline) < 30 else (82 if len(headline) < 42 else 70)
-    return page(SQ, SQ, f"""
-      .grid {{ height:100%; padding:88px; display:grid;
+    hsize = 100 if len(headline) < 30 else (86 if len(headline) < 42 else 74)
+    return page(IG_W, IG_H, f"""
+      .grid {{ height:100%; padding:96px; display:grid;
         grid-template-rows:auto 1fr auto; }}
       .eyebrow {{ font-size:24px; letter-spacing:.22em; }}
       .body {{ display:flex; flex-direction:column; justify-content:center;
@@ -183,11 +186,11 @@ def fb_card(eyebrow, headline, sub, logos):
 
 
 def square_credentials(eyebrow, headline, sub, logos):
-    """1:1 anchor card for Instagram, 1080x1080. Same argument as fb_card, but
-    the taller canvas lets the client chips breathe over two rows."""
+    """4:5 anchor card for Instagram, 1080x1350. Same argument as fb_card; the
+    taller canvas lets the client chips breathe."""
     chips = "".join(f'<span class="chip">{l}</span>' for l in logos)
-    return page(SQ, SQ, f"""
-      .grid {{ height:100%; padding:88px; display:grid;
+    return page(IG_W, IG_H, f"""
+      .grid {{ height:100%; padding:96px; display:grid;
         grid-template-rows:auto 1fr auto; }}
       .eyebrow {{ font-size:24px; letter-spacing:.22em; }}
       .body {{ display:flex; flex-direction:column; justify-content:center;
@@ -245,22 +248,22 @@ def reel_frame(label, headline, sub):
 # --- the batch ------------------------------------------------------------
 ASSETS = {
     # Instagram carousel: sells the SOCIAL_LAYER bundle
-    "ig-carousel-1": (SQ, SQ, carousel_slide(
+    "ig-carousel-1": (IG_W, IG_H, carousel_slide(
         1, 5, "Gray Content Studio",
         "One shoot day. A month of content.",
         "How a single half-day at your business becomes four weeks of posts.")),
-    "ig-carousel-2": (SQ, SQ, carousel_slide(
+    "ig-carousel-2": (IG_W, IG_H, carousel_slide(
         2, 5, "What you get", "", None, big="4",
         big_label="platform-native reels")),
-    "ig-carousel-3": (SQ, SQ, carousel_slide(
+    "ig-carousel-3": (IG_W, IG_H, carousel_slide(
         3, 5, "Included", "Captions, verticals, thumbnails.",
         "Every cut sized and captioned for the platform it runs on — "
         "not one export blasted everywhere.")),
-    "ig-carousel-4": (SQ, SQ, carousel_slide(
+    "ig-carousel-4": (IG_W, IG_H, carousel_slide(
         4, 5, "Starting at", "",
         "Strategy session, half-day shoot, four finished reels.",
         big="$1,400", big_label="per month")),
-    "ig-carousel-5": (SQ, SQ, carousel_slide(
+    "ig-carousel-5": (IG_W, IG_H, carousel_slide(
         5, 5, "Richmond, VA",
         "Text us. We'll send the reel.",
         "(540) 558-5894 · graycontentstudio.co")),
@@ -276,7 +279,7 @@ ASSETS = {
         stat=("1.5s", "to earn the next second"))),
 
     # Instagram 1:1 anchor card — same wedge, square for the IG feed
-    "ig-credentials": (SQ, SQ, square_credentials(
+    "ig-credentials": (IG_W, IG_H, square_credentials(
         "Richmond, Virginia",
         "Broadcast-grade video. Small-business pricing.",
         "Campaign work for Fortune 500 brands — now building content engines "
