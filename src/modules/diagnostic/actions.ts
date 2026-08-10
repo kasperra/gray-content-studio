@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { createSupabaseAdmin, supabaseConfigured } from "@/lib/supabase/server";
 import { diagnose, stageMeta } from "./scoring";
 import { QUESTIONS } from "./questions";
@@ -182,6 +183,27 @@ export async function saveConfig(entries: Record<string, string>): Promise<{ ok:
   } catch {
     return { ok: false };
   }
+}
+
+/** Permanently delete a completed diagnostic. The lead's funnel events are
+    removed with it — diagnostic_events.result_id is `on delete cascade` — so no
+    orphan rows are left skewing the funnel counts. */
+export async function deleteDiagnosticResult(
+  id: string
+): Promise<{ ok: boolean; message: string }> {
+  const { requireAdmin } = await import("@/lib/auth");
+  await requireAdmin();
+  if (!id) return { ok: false, message: "Missing lead." };
+
+  try {
+    const { error } = await createSupabaseAdmin().from("diagnostic_results").delete().eq("id", id);
+    if (error) return { ok: false, message: "Could not delete this lead." };
+  } catch {
+    return { ok: false, message: "Could not delete this lead." };
+  }
+
+  revalidatePath("/admin/diagnostic");
+  return { ok: true, message: "Lead deleted." };
 }
 
 /** Result lookup for the shareable URL. Service-role, because results carry

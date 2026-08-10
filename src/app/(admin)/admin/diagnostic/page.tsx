@@ -3,6 +3,8 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 import { DIMENSIONS, DIMENSION_LABELS, type Dimension } from "@/modules/diagnostic/types";
 import { STAGES } from "@/modules/diagnostic/content";
 import { optionLabel } from "@/modules/diagnostic/questions";
+import { deleteDiagnosticResult } from "@/modules/diagnostic/actions";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { ConfigEditor } from "./ConfigEditor";
 
 /* Diagnostic leads + funnel. Every completed diagnostic is a segmented lead:
@@ -331,14 +333,22 @@ export default async function AdminDiagnosticPage({
                         {new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                       </td>
                       <td className="py-3 text-right">
-                        <a
-                          href={`/diagnostic/results/${r.public_id}`}
-                          target="_blank"
-                          rel="noopener"
-                          className="text-accent text-[0.82rem] font-semibold hover:underline underline-offset-4 whitespace-nowrap"
-                        >
-                          View →
-                        </a>
+                        <div className="flex items-center justify-end gap-3">
+                          <a
+                            href={`/diagnostic/results/${r.public_id}`}
+                            target="_blank"
+                            rel="noopener"
+                            className="text-accent text-[0.82rem] font-semibold hover:underline underline-offset-4 whitespace-nowrap"
+                          >
+                            View →
+                          </a>
+                          <ConfirmDeleteButton
+                            action={deleteDiagnosticResult}
+                            args={[r.id]}
+                            itemName={`${r.name || r.business_name || r.email || "this lead"}'s diagnostic`}
+                            variant="inline"
+                          />
+                        </div>
                       </td>
                     </tr>
                   );
