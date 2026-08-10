@@ -11,17 +11,20 @@ Gray Content Studio — a video production company's website **and** agency oper
 ```bash
 npm run dev      # dev server on :3000 (used by .claude/launch.json preview)
 npm run build    # production build — RUN THIS before committing; it type-checks all routes
+npm test         # run every *.test.ts check under src/ (see below)
 npm run lint     # eslint (flat config, eslint-config-next)
 ```
 
-There is **no test runner** — no `npm test` script, no vitest/jest dependency. What exists instead is a small set of standalone `*.test.ts` check scripts written against `node:assert/strict` and run one at a time:
+There is **no test framework** — no vitest, no jest. The checks are standalone `*.test.ts` modules that throw via `node:assert/strict`. `scripts/test.mjs` discovers every one under `src/` and runs each in its own `tsx` process:
 
 ```bash
-npx tsx src/modules/pricing/bundles.test.ts      # package presets vs advertised floors
-npx tsx src/modules/proposals/sow-phases.test.ts # SOW phase selection
+npm test               # all checks
+npm test -- pricing    # only paths matching "pricing"
 ```
 
-**Nothing runs these automatically**, so they only catch regressions if you remember to invoke them. Run the relevant one after touching the rate card, the bundle presets, or SOW phase logic — `bundles.test.ts` guards a bug that shipped once already (a preset loading far above the "from" price the pricing card advertises).
+Discovery is by design — drop a new `*.test.ts` anywhere under `src/` and it runs with no wiring. (A hardcoded list is how these checks went unnoticed for so long.)
+
+**Nothing runs them in CI**, so they only catch regressions when invoked. Run them after touching the rate card, the bundle presets, or SOW phase logic — `bundles.test.ts` guards a bug that shipped once already (a preset loading far above the "from" price the pricing card advertises).
 
 Otherwise verification is done by building (`npm run build` catches all type errors) and by driving the running app in a browser against the real Supabase project. When verifying features that touch the database, seed data via the Supabase REST API with the service-role key, exercise the UI, assert against the DB, then delete the test rows.
 
