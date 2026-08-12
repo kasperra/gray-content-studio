@@ -195,6 +195,7 @@ export const PACKAGES: Package[] = [
     includes: [
       "Half-day videography shoot",
       "4–8 platform-native reels or shorts",
+      "Micro-content repurposed from 4 reels",
       "Captions + vertical versions",
       "Thumbnail design",
     ],
