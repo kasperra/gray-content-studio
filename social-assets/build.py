@@ -219,9 +219,11 @@ def square_credentials(eyebrow, headline, sub, logos):
     """)
 
 
-def reel_frame(label, headline, sub):
-    """Vertical reel title/cover frame, 1080x1920."""
-    return page(1080, 1920, f"""
+def reel_frame(label, headline, sub, w=1080, h=1920):
+    """Vertical reel title/cover frame. Default 1080x1920 (9:16) for
+    Stories/Reels; pass h=1350 for the 4:5 feed variant — feed posts crop 9:16
+    to 4:5, which cuts the wordmark."""
+    return page(w, h, f"""
       .grid {{ height:100%; padding:150px 88px 130px 88px; display:grid;
         grid-template-rows:1fr auto; }}
       .body {{ display:flex; flex-direction:column; justify-content:center;
@@ -301,6 +303,14 @@ ASSETS = {
     "reel-after": (1080, 1920, reel_frame(
         "AFTER", "Same location. Same day.",
         "Lit, graded, and cut for the platform.")),
+
+    # Same pair at 4:5 for feed posts (9:16 gets cropped in feed)
+    "post-before": (1080, 1350, reel_frame(
+        "BEFORE", "Shot on a phone.",
+        "The footage most businesses settle for.", h=1350)),
+    "post-after": (1080, 1350, reel_frame(
+        "AFTER", "Same location. Same day.",
+        "Lit, graded, and cut for the platform.", h=1350)),
 }
 
 
