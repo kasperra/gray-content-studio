@@ -215,3 +215,48 @@ export async function sendDiagnosticEmail(
     return false;
   }
 }
+
+export type MailerStatus = {
+  keySet: boolean;
+  fromSet: boolean;
+  from: string | null;
+  /** null when we couldn't ask Resend (no key, or the request failed). */
+  domains: { name: string; status: string }[] | null;
+  error: string | null;
+};
+
+/** Reports whether the result email is actually wired up: env vars present, and
+    what Resend says about the sending domain's verification. Read-only, and it
+    never returns the API key — only booleans and Resend's own domain status. */
+export async function checkMailer(): Promise<MailerStatus> {
+  const key = process.env.RESEND_API_KEY;
+  const from = process.env.DIAGNOSTIC_FROM_EMAIL ?? null;
+  const base: MailerStatus = {
+    keySet: Boolean(key),
+    fromSet: Boolean(from),
+    from,
+    domains: null,
+    error: null,
+  };
+  if (!key) return { ...base, error: "RESEND_API_KEY is not set on this deployment." };
+
+  try {
+    const res = await fetch("https://api.resend.com/domains", {
+      headers: { Authorization: `Bearer ${key}` },
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      return { ...base, error: `Resend rejected the API key (HTTP ${res.status}).` };
+    }
+    const body = (await res.json()) as { data?: { name?: string; status?: string }[] };
+    return {
+      ...base,
+      domains: (body.data ?? []).map((d) => ({
+        name: d.name ?? "unknown",
+        status: d.status ?? "unknown",
+      })),
+    };
+  } catch {
+    return { ...base, error: "Couldn't reach the Resend API." };
+  }
+}

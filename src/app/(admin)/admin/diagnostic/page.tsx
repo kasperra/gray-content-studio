@@ -6,6 +6,7 @@ import { optionLabel } from "@/modules/diagnostic/questions";
 import { deleteDiagnosticResult } from "@/modules/diagnostic/actions";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { ConfigEditor } from "./ConfigEditor";
+import { MailerStatus } from "./MailerStatus";
 
 /* Diagnostic leads + funnel. Every completed diagnostic is a segmented lead:
    stage, bottleneck, intent and urgency are all stored as columns so they can
@@ -358,6 +359,8 @@ export default async function AdminDiagnosticPage({
           </div>
         )}
       </section>
+
+      <MailerStatus />
 
       <ConfigEditor initial={Object.fromEntries((config ?? []).map((c) => [c.key, c.value]))} />
     </>

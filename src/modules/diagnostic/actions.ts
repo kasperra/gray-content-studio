@@ -6,7 +6,7 @@ import { createSupabaseAdmin, supabaseConfigured } from "@/lib/supabase/server";
 import { diagnose, stageMeta } from "./scoring";
 import { QUESTIONS } from "./questions";
 import { DEFAULT_BOOKING_URL } from "./content";
-import { renderDiagnosticEmail, sendDiagnosticEmail } from "./email";
+import { renderDiagnosticEmail, sendDiagnosticEmail, checkMailer, type MailerStatus } from "./email";
 import type { Answers, Result } from "./types";
 
 /* All diagnostic writes happen here, server-side, through the service-role
@@ -253,4 +253,11 @@ export async function getResultByPublicId(publicId: string) {
     .eq("public_id", publicId)
     .single();
   return data;
+}
+
+/** Admin-only view of whether the result email is wired up. Returns no secrets. */
+export async function getMailerStatus(): Promise<MailerStatus> {
+  const { requireAdmin } = await import("@/lib/auth");
+  await requireAdmin();
+  return checkMailer();
 }
