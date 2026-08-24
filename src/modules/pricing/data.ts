@@ -119,6 +119,34 @@ export const PRICING_CATEGORIES: Category[] = [
     ],
   },
   {
+    id: "events",
+    name: "Event Coverage",
+    services: [
+      /* One-time event coverage, sold as packages rather than assembled from
+         the hourly lines above. Each package is ALL-INCLUSIVE — its price
+         already covers the coverage hours, the edited gallery, and (for Story
+         and Spotlight) the video deliverables. Never stack `eventphoto`,
+         `photoedit`, or an edit line on top of one; the package is deliberately
+         priced below the sum of those parts.
+
+         The upgrade rates below are event-scoped and undercut the general rate
+         card on purpose — they're attached to a booked package, not new list
+         prices. A standalone shoot day still bills at `eventcov` / `photoaddon`
+         / `secondcam` / `drone`. */
+      { id: "evtessentials", name: "Event Essentials (up to 2 hrs)", unit: "Event", price: 450 },
+      { id: "evtstory", name: "Event Story (up to 4 hrs)", unit: "Event", price: 850 },
+      { id: "evtspotlight", name: "Event Spotlight (up to 6 hrs)", unit: "Event", price: 1400 },
+      { id: "evthour", name: "Additional Coverage Hour", unit: "Hour", price: 125 },
+      { id: "evtphotog", name: "Additional Event Photographer", unit: "Event", price: 300 },
+      { id: "evtvideog", name: "Additional Event Videographer", unit: "Event", price: 400 },
+      { id: "evtselects", name: "24–48 Hour Photo Selects", unit: "Event", price: 150 },
+      { id: "evtsameday", name: "Same-Day Social Selects", unit: "Event", price: 200 },
+      { id: "evtreel", name: "Additional Vertical Reel", unit: "Reel", price: 175 },
+      { id: "evtheadshots", name: "On-Site Headshot Station", unit: "Event", price: 250 },
+      { id: "evtdrone", name: "Event Drone Coverage", unit: "Event", price: 250 },
+    ],
+  },
+  {
     id: "delivery",
     name: "Delivery, Travel & Add-ons",
     services: [

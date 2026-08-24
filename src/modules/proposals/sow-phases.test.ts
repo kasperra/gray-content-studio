@@ -23,6 +23,11 @@ assert.deepEqual(titles(["Pre-Production & Strategy"]), [
 ]);
 assert.ok(!titles(["Pre-Production & Strategy"]).includes("Production"));
 
+// An event package is sold as one all-inclusive line with no Production or
+// Post-Production line beside it, so the category itself has to earn both
+// phases — otherwise every event SOW prints as Discovery + Delivery alone.
+assert.deepEqual(titles(["Event Coverage"]), ["Discovery", "Production", "Editing", "Delivery"]);
+
 // Social work adds distribution.
 assert.ok(titles(["Social Media Management"]).includes("Content Distribution"));
 

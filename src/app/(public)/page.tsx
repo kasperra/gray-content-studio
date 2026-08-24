@@ -27,7 +27,9 @@ const ORG_JSONLD = {
       priceRange: "$$",
       areaServed: "United States",
     },
-    ...SERVICES.slice(0, 8).map((s) => ({
+    // Every service, not a slice — a slice silently drops anything added later
+    // out of the structured data.
+    ...SERVICES.map((s) => ({
       "@type": "Service",
       name: s.title,
       description: s.outcome,

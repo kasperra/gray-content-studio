@@ -6,7 +6,7 @@
    on $5,760 reads as bait-and-switch, so every preset must compute close to its
    floor — and must only reference services that exist on the rate card. */
 import assert from "node:assert/strict";
-import { BUNDLES } from "./bundles";
+import { BUNDLES, bundlesFor } from "./bundles";
 import { computeEstimate } from "./compute";
 import { PRICING_CATEGORIES } from "./data";
 
@@ -41,6 +41,16 @@ for (const bundle of BUNDLES) {
     `${bundle.name}: ${Object.keys(bundle.selections).length} services selected but ${estimate.items.length} priced`
   );
 
+  // An event package is one all-inclusive line item, so there is nothing to
+  // drift — it must land on the advertised number exactly, not merely near it.
+  if (bundle.family === "event") {
+    assert.equal(
+      estimate.total,
+      bundle.floor,
+      `${bundle.name}: event preset loads $${estimate.total} but the card advertises "from $${bundle.floor}"`
+    );
+  }
+
   const drift = (estimate.total - bundle.floor) / bundle.floor;
   const pct = (drift * 100).toFixed(1);
   console.log(
@@ -53,15 +63,21 @@ for (const bundle of BUNDLES) {
   );
 }
 
-// Each tier must genuinely contain the one below it — the cards promise it.
-// The exceptions are entry-tier lines the higher tiers cover with their own,
+// The production tiers must genuinely contain the one below — the cards promise
+// it. The exceptions are entry-tier lines the higher tiers cover with their own,
 // heavier equivalents; carrying them up would double-bill the client.
+//
+// Event tiers are deliberately excluded: they're alternatives sized to the
+// event, not a stack, and each is a single all-inclusive line item.
 const STARTER_ONLY: Record<string, string> = {
   videohalf: "superseded by the brand film's all-inclusive production",
   starterstrat: "higher tiers bill their own strategy work (Campaign Engine: Creative Strategy Session)",
 };
 
-const [starter, builder, engine] = BUNDLES;
+const production = bundlesFor("production");
+assert.equal(production.length, 3, "the production ladder is no longer three tiers");
+const [starter, builder, engine] = production;
+
 for (const id of Object.keys(starter.selections)) {
   if (STARTER_ONLY[id]) continue;
   assert.ok(builder.selections[id], `Brand Builder is missing Social Starter's "${id}"`);
@@ -75,5 +91,18 @@ for (const id of Object.keys(STARTER_ONLY)) {
 for (const id of Object.keys(builder.selections)) {
   assert.ok(engine.selections[id], `Campaign Engine is missing Brand Builder's "${id}"`);
 }
+
+// Event packages price coverage, gallery and clips inside the package. Stacking
+// an hourly or per-image line on top is the double-bill this ladder can produce.
+const PACKAGE_COVERS = ["eventphoto", "eventcov", "photoedit", "reeledit", "igreel", "basicedit", "advedit"];
+for (const bundle of bundlesFor("event")) {
+  for (const id of PACKAGE_COVERS) {
+    assert.ok(
+      !bundle.selections[id],
+      `${bundle.name} double-bills "${id}" — the package price already covers it`
+    );
+  }
+}
+assert.equal(bundlesFor("event").length, 3, "expected three event packages");
 
 console.log("bundles: all checks passed");

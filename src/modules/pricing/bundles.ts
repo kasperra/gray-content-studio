@@ -16,6 +16,10 @@
 
 export type Bundle = {
   id: string;
+  /** Which ladder this belongs to. The production tiers stack — each contains
+      the one below — while the event tiers are alternatives sized to the event,
+      so containment is only meaningful within a family. */
+  family: "production" | "event";
   name: string;
   /** Marketing floor shown on the package card. */
   from: string;
@@ -74,9 +78,18 @@ const CAMPAIGN_ENGINE: Record<string, number> = {
   testimonial: 1, // testimonial cutdown
 };
 
+/* Event packages are single all-inclusive line items (see the Event Coverage
+   category in data.ts), so each preset lands exactly on its advertised floor
+   with nothing to drift. Adding coverage hours, gallery editing, or clip edits
+   on top would double-bill work the package price already covers. */
+const EVENT_ESSENTIALS: Record<string, number> = { evtessentials: 1 };
+const EVENT_STORY: Record<string, number> = { evtstory: 1 };
+const EVENT_SPOTLIGHT: Record<string, number> = { evtspotlight: 1 };
+
 export const BUNDLES: Bundle[] = [
   {
     id: "social-starter",
+    family: "production",
     name: "Social Starter",
     from: "from $1,400",
     floor: 1400,
@@ -87,6 +100,7 @@ export const BUNDLES: Bundle[] = [
   },
   {
     id: "brand-builder",
+    family: "production",
     name: "Brand Builder",
     from: "from $3,800",
     floor: 3800,
@@ -97,6 +111,7 @@ export const BUNDLES: Bundle[] = [
   },
   {
     id: "campaign-engine",
+    family: "production",
     name: "Campaign Engine",
     from: "from $6,500",
     floor: 6500,
@@ -105,8 +120,45 @@ export const BUNDLES: Bundle[] = [
     notes:
       "Everything in Brand Builder plus a full commercial campaign: creative strategy, script and storyboard, multi-day production including drone, and a 30–60 second commercial with platform variants and testimonial cutdowns.",
   },
+  {
+    id: "event-essentials",
+    family: "event",
+    name: "Event Essentials",
+    from: "from $450",
+    floor: 450,
+    tagline: "Polished photography for smaller events and gatherings.",
+    selections: EVENT_ESSENTIALS,
+    notes:
+      "Up to 2 hours of event coverage with 40+ professionally edited photographs: guest candids, key moments, detail and décor, signage and branding, plus speaker and award coverage where applicable. Delivered to an online gallery within 5–7 business days.",
+  },
+  {
+    id: "event-story",
+    family: "event",
+    name: "Event Story",
+    from: "from $850",
+    floor: 850,
+    tagline: "Photo and video together — documented and ready to post.",
+    selections: EVENT_STORY,
+    notes:
+      "Up to 4 hours of event coverage with 75+ professionally edited photographs, a 30–45 second vertical event recap, and 2 vertical micro-content clips. Includes guest, speaker, sponsor, décor and branding coverage, pre-event shot-list planning, and an online gallery within 4–6 business days.",
+  },
+  {
+    id: "event-spotlight",
+    family: "event",
+    name: "Event Spotlight",
+    from: "from $1,400",
+    floor: 1400,
+    tagline: "A full content library from a major event.",
+    selections: EVENT_SPOTLIGHT,
+    notes:
+      "Up to 6 hours of event coverage with 125+ professionally edited photographs, a 60–90 second cinematic recap, and 3–4 vertical micro-content clips. Includes intentional sponsor and partner coverage, speakers, awards, VIPs, attendees, signage and décor, full pre-event coverage planning, and an online gallery within 3–5 business days.",
+  },
 ];
 
 export function getBundle(id: string): Bundle | undefined {
   return BUNDLES.find((b) => b.id === id);
+}
+
+export function bundlesFor(family: Bundle["family"]): Bundle[] {
+  return BUNDLES.filter((b) => b.family === family);
 }
