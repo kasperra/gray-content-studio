@@ -1,3 +1,4 @@
+import { LEGAL } from "@/content/legal";
 import { envStr, mailFrom, sendMail } from "@/lib/mail";
 import { DIMENSION_LABELS, type Result } from "./types";
 import { BOTTLENECK_COPY, STAGES } from "./content";
@@ -9,18 +10,26 @@ import { stageMeta } from "./scoring";
    POST, no new dependency. Provider details live behind sendDiagnosticEmail so
    swapping to Postmark or SES later is a single function.
 
-   Rendered light rather than in the site's near-black, because dark HTML email
-   renders unpredictably across clients (Outlook and some Gmail dark modes
-   re-colour text). This matches the light document treatment already used for
-   client-facing proposals. */
+   Rendered in the brand's near-black. Dark HTML email needs three specific
+   defences to survive real inboxes, all of which are in place below:
+   color-scheme/supported-color-schemes so Gmail and Outlook dark modes don't
+   invert it, opaque hex only (Outlook's Word engine drops rgba), and bgcolor
+   attributes alongside every CSS background (that engine ignores the CSS one,
+   which would render the card white and hide the off-white type). */
 
 const BASE_URL = process.env.DIAGNOSTIC_URL || "https://diagnostic.graycontentstudio.co";
 
-const INK = "#1c1a17";
-const MUTED = "#6f6a62";
-const GOLD = "#b5842e"; // Tuscan Sun darkened for contrast on cream
-const PAPER = "#faf8f4";
-const RULE = "#e4ded3";
+// Mirrors globals.css. The two flattened values replace rgba() the Word engine
+// would drop, leaving an invisible panel behind.
+const INK = "#f5f2ec";
+const MUTED = "#9b968e";
+const GOLD = "#fac748"; // Tuscan Sun
+const PAPER = "#0b0b0c"; // page ground
+const SURFACE = "#141416"; // card
+const MAHOGANY = "#301509"; // Rich Mahogany — the header's depth
+const RULE = "#2a2a2c";
+const ACCENT_SOFT = "#342d1d"; // accent at 14% over SURFACE
+const ACCENT_EDGE = "#705c2a"; // accent at 40% over SURFACE
 
 function esc(s: string): string {
   return s
@@ -76,28 +85,30 @@ export function renderDiagnosticEmail(opts: {
 
   const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(subject)}</title></head>
-<body style="margin:0;padding:0;background:${PAPER};">
+<meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark">
+<title>${esc(subject)}</title>
+<style>:root{color-scheme:dark;supported-color-schemes:dark;}</style></head>
+<body style="margin:0;padding:0;background:${PAPER};color-scheme:dark;" bgcolor="${PAPER}">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Stage ${result.stage} — ${esc(meta.name)}. Your primary bottleneck is ${esc(primaryLabel)}.</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${PAPER};padding:28px 12px;">
-<tr><td align="center">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#ffffff;border:1px solid ${RULE};border-radius:10px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${PAPER}" style="background:${PAPER};padding:28px 12px;">
+<tr><td align="center" bgcolor="${PAPER}" style="background:${PAPER};">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="${SURFACE}" style="width:600px;max-width:100%;background:${SURFACE};border:1px solid ${RULE};border-radius:10px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
 
-  <tr><td style="background:#0b0b0c;padding:30px 34px;">
-    <p style="margin:0;font-size:13px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#f5f2ec;">
-      Gray<span style="color:#fac748;">·</span>Content<span style="color:#fac748;">·</span>Studio
+  <tr><td bgcolor="${MAHOGANY}" style="background:${MAHOGANY};padding:30px 34px;">
+    <p style="margin:0;font-size:13px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:${INK};">
+      Gray<span style="color:${GOLD};">·</span>Content<span style="color:${GOLD};">·</span>Studio
     </p>
-    <p style="margin:22px 0 0 0;font-size:11px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:#fac748;">Your Content Diagnosis</p>
-    <h1 style="margin:8px 0 0 0;font-size:26px;line-height:1.25;color:#f5f2ec;font-weight:700;">Stage ${result.stage} — ${esc(meta.name)}</h1>
+    <p style="margin:22px 0 0 0;font-size:11px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:${GOLD};">Your Content Diagnosis</p>
+    <h1 style="margin:8px 0 0 0;font-size:26px;line-height:1.25;color:${INK};font-weight:700;">Stage ${result.stage} — ${esc(meta.name)}</h1>
   </td></tr>
 
-  <tr><td style="padding:32px 34px 0 34px;">
+  <tr><td bgcolor="${SURFACE}" style="background:${SURFACE};padding:32px 34px 0 34px;">
     <p style="margin:0 0 18px 0;font-size:16px;color:${INK};">${esc(greeting)}</p>
     <p style="margin:0 0 26px 0;font-size:17px;line-height:1.4;color:${INK};font-weight:700;">${esc(meta.headline)}</p>
     <p style="margin:0 0 28px 0;font-size:15px;line-height:1.65;color:${MUTED};">${esc(meta.positioning)}</p>
 
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fdf7e9;border:1px solid #f0dda8;border-radius:8px;margin:0 0 26px 0;">
-      <tr><td style="padding:20px 22px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${ACCENT_SOFT}" style="background:${ACCENT_SOFT};border:1px solid ${ACCENT_EDGE};border-radius:8px;margin:0 0 26px 0;">
+      <tr><td bgcolor="${ACCENT_SOFT}" style="background:${ACCENT_SOFT};padding:20px 22px;">
         <p style="margin:0 0 4px 0;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:${MUTED};">Your primary bottleneck</p>
         <p style="margin:0 0 8px 0;font-size:20px;font-weight:700;color:${GOLD};">${esc(primaryLabel)}</p>
         <p style="margin:0;font-size:14px;line-height:1.6;color:${INK};">${esc(primaryWhat)}</p>
@@ -119,7 +130,7 @@ export function renderDiagnosticEmail(opts: {
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:14px 0 6px 0;">
       <tr><td align="center" style="padding:14px 0 6px 0;">
-        <a href="${esc(resultUrl)}" style="display:inline-block;background:#0b0b0c;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:15px 30px;border-radius:999px;">View Your Full Diagnosis</a>
+        <a href="${esc(resultUrl)}" style="display:inline-block;background:${GOLD};color:${PAPER};text-decoration:none;font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:15px 30px;border-radius:999px;">View Your Full Diagnosis</a>
       </td></tr>
       <tr><td align="center" style="padding:0 0 8px 0;">
         <span style="font-size:12px;color:${MUTED};">Includes your 30-day plan and every dimension score.</span>
@@ -127,19 +138,20 @@ export function renderDiagnosticEmail(opts: {
     </table>
   </td></tr>
 
-  <tr><td style="padding:26px 34px 34px 34px;">
+  <tr><td bgcolor="${SURFACE}" style="background:${SURFACE};padding:26px 34px 34px 34px;">
     <div style="border-top:1px solid ${RULE};padding-top:24px;">
       <p style="margin:0 0 18px 0;font-size:14px;line-height:1.65;color:${MUTED};">
         This diagnostic was created by Gray Content Studio to help businesses understand where their
         content is working, where it's breaking down, and what to do next.
       </p>
-      <a href="${esc(bookingUrl)}" style="display:inline-block;background:#fac748;color:#0b0b0c;text-decoration:none;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:13px 26px;border-radius:999px;">${esc(ctaLabel)}</a>
+      <a href="${esc(bookingUrl)}" style="display:inline-block;background:${SURFACE};color:${GOLD};text-decoration:none;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:13px 26px;border:1px solid ${GOLD};border-radius:999px;">${esc(ctaLabel)}</a>
     </div>
   </td></tr>
 
-  <tr><td style="background:${PAPER};padding:18px 34px;border-top:1px solid ${RULE};">
-    <p style="margin:0;font-size:12px;color:${MUTED};">
-      Gray Content Studio — Video Production · Editing · Animation<br>
+  <tr><td bgcolor="${PAPER}" style="background:${PAPER};padding:18px 34px;border-top:1px solid ${RULE};">
+    <p style="margin:0;font-size:12px;line-height:1.6;color:${MUTED};">
+      ${esc(LEGAL.entity)} — Video Production · Editing · Animation<br>
+      ${esc(LEGAL.postalAddress)}<br>
       You're receiving this because you requested your diagnosis at ${esc(BASE_URL.replace(/^https?:\/\//, ""))}.
     </p>
   </td></tr>
@@ -174,7 +186,8 @@ export function renderDiagnosticEmail(opts: {
     "",
     `${ctaLabel}: ${bookingUrl}`,
     "",
-    "Gray Content Studio — Video Production · Editing · Animation",
+    `${LEGAL.entity} — Video Production · Editing · Animation`,
+    LEGAL.postalAddress,
   ].join("\n");
 
   return { subject, html, text };
