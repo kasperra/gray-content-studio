@@ -39,6 +39,8 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
             config.result_footer ??
             "Your diagnostic was created by Gray Content Studio to help businesses understand where their content is working, where it's breaking down, and what to do next."
           }
+          publicId={id}
+          canRequest={Boolean(row.email)}
         />
       </main>
     </DiagnosticFrame>

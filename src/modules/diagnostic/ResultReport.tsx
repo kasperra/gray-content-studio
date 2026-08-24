@@ -1,6 +1,7 @@
 import { DIMENSIONS, DIMENSION_LABELS, type Dimension, type Result } from "./types";
 import { BOTTLENECK_COPY, STAGES } from "./content";
 import { stageMeta } from "./scoring";
+import { FollowUpCta } from "./FollowUpCta";
 
 /* Presentational only — no hooks, so it renders identically from the client
    flow and from the server-rendered permanent result page. */
@@ -82,6 +83,8 @@ export function ResultReport({
   bookingUrl,
   footerCopy,
   onCtaClick,
+  publicId,
+  canRequest = false,
 }: {
   result: Result;
   /** false shows the initial diagnosis only; the roadmap unlocks after capture. */
@@ -90,6 +93,9 @@ export function ResultReport({
   bookingUrl: string;
   footerCopy: string;
   onCtaClick?: () => void;
+  publicId?: string;
+  /** True once their email is on the record, so the CTA can book in one click. */
+  canRequest?: boolean;
 }) {
   const meta = stageMeta(result.stage);
   const next = result.stage < 5 ? STAGES[result.stage] : null; // STAGES is 0-indexed
@@ -222,13 +228,13 @@ export function ResultReport({
 
           <section className="mt-14 rounded-lg border border-accent/40 bg-accent-soft p-7 sm:p-9">
             <p className="text-[0.95rem] text-ink/90 leading-relaxed max-w-[62ch]">{footerCopy}</p>
-            <a
-              href={bookingUrl}
-              onClick={onCtaClick}
-              className="inline-block mt-7 rounded-full bg-accent text-bg border border-accent font-semibold uppercase text-[0.85rem] tracking-[0.08em] px-[2em] py-[0.85em] transition-all duration-200 hover:bg-transparent hover:text-accent hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-            >
-              {ctaLabel}
-            </a>
+            <FollowUpCta
+              label={ctaLabel}
+              publicId={publicId}
+              canRequest={canRequest}
+              fallbackUrl={bookingUrl}
+              onClicked={onCtaClick}
+            />
           </section>
         </>
       )}

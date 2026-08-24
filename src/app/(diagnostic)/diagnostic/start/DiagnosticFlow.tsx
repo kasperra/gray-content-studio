@@ -205,6 +205,8 @@ export function DiagnosticFlow({
           bookingUrl={bookingUrl}
           footerCopy={footerCopy}
           onCtaClick={() => beacon("cta_click", { sessionId, resultPublicId: publicId })}
+          publicId={publicId}
+          canRequest={captured}
         />
 
         {!captured && (

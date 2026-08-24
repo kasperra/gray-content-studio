@@ -261,3 +261,85 @@ export async function getMailerStatus(): Promise<MailerStatus> {
   await requireAdmin();
   return checkMailer();
 }
+
+/** Turn a completed diagnosis into a CRM lead.
+ *
+ * At this point the visitor has already given us their name, email, business and
+ * website, and the diagnosis knows their stage, bottlenecks, intent and urgency.
+ * Sending them to the contact form to retype all of it loses people at peak
+ * interest, so the CTA books the request directly instead.
+ *
+ * Diagnostic results live in their own table; this is what puts the person on
+ * the CRM board next to every other inquiry. */
+export async function requestFollowUp(
+  publicId: string
+): Promise<{ ok: boolean; message: string; needsForm?: boolean }> {
+  if (await rateLimited()) return { ok: false, message: "Too many attempts. Please try again shortly." };
+  if (!publicId || !/^[a-f0-9]{8,64}$/i.test(publicId)) return { ok: false, message: "Missing diagnosis." };
+
+  if (!supabaseConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return { ok: false, message: "Not connected yet." };
+  }
+
+  const admin = createSupabaseAdmin();
+  const { data: row } = await admin
+    .from("diagnostic_results")
+    .select("*")
+    .eq("public_id", publicId)
+    .single();
+  if (!row) return { ok: false, message: "We couldn't find that diagnosis." };
+
+  // Someone opening an old result link who never captured has nothing to send;
+  // the UI falls back to the contact form for them.
+  if (!row.email) return { ok: false, needsForm: true, message: "We need your email first." };
+
+  // Don't create a second lead if they click again. The public_id in the message
+  // is the link back to the report, and doubles as the idempotency marker.
+  const { data: existing } = await admin
+    .from("leads")
+    .select("id")
+    .eq("email", row.email)
+    .ilike("message", `%${publicId}%`)
+    .limit(1);
+  if (existing?.length) {
+    return { ok: true, message: "You've already asked us to reach out — we'll be in touch shortly." };
+  }
+
+  const result = diagnose((row.answers ?? {}) as Answers);
+  const meta = stageMeta(result.stage);
+  const base = process.env.DIAGNOSTIC_URL || "https://diagnostic.graycontentstudio.co";
+
+  const message = [
+    `Requested follow-up from the Content Growth Diagnostic.`,
+    ``,
+    `Stage ${result.stage} — ${meta.name}`,
+    `Primary bottleneck: ${result.primaryBottleneck}`,
+    result.secondaryBottlenecks.length
+      ? `Secondary: ${result.secondaryBottlenecks.join(", ")}`
+      : null,
+    `Scores — visibility ${result.scores.visibility}, strategy ${result.scores.strategy}, production ${result.scores.production}, distribution ${result.scores.distribution}, conversion ${result.scores.conversion}, measurement ${result.scores.measurement}`,
+    row.purchase_intent ? `Intent: ${row.purchase_intent}` : null,
+    row.urgency ? `Urgency: ${row.urgency}` : null,
+    row.website ? `Website: ${row.website}` : null,
+    ``,
+    `Full report: ${base}/results/${publicId}`,
+  ]
+    .filter((l) => l !== null)
+    .join("\n");
+
+  const { error } = await admin.from("leads").insert({
+    name: row.name || row.business_name || "Diagnostic lead",
+    email: row.email,
+    company: row.business_name || null,
+    project_type: row.business_type || null,
+    message,
+    source: "diagnostic",
+  });
+
+  if (error) return { ok: false, message: "We couldn't send that. Please try again." };
+
+  await track("cta_click", { resultPublicId: publicId });
+  revalidatePath("/admin");
+  revalidatePath("/admin/crm");
+  return { ok: true, message: "Request sent. We'll reply within one business day." };
+}
