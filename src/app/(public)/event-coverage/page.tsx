@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { EVENT_PACKAGES, EVENT_UPGRADES } from "@/content/site";
 import { Container } from "@/components/sections";
 import { Eyebrow, ButtonGold, SectionTitle } from "@/components/Buttons";
@@ -39,6 +40,18 @@ const EVENT_JSONLD = {
     },
   })),
 };
+
+/* Frames from the Walk Like Her x Secure dinner. Captions describe what each
+   one demonstrates, because the grid is doing a job — proving the four things
+   the packages promise — not decorating the page. */
+const GALLERY = [
+  { src: "/img/events/bar.jpg", alt: "A bartender shaking a cocktail behind a candlelit bar at an evening event" },
+  { src: "/img/events/guests.jpg", alt: "Two guests laughing together on a green velvet banquette" },
+  { src: "/img/events/plating.jpg", alt: "Two plated courses photographed on a dark table under warm light" },
+  { src: "/img/events/room.jpg", alt: "Guests in conversation along a long dinner table set with candles and glassware" },
+  { src: "/img/events/service.jpg", alt: "A server pouring wine beside a table centerpiece of red and orange florals" },
+  { src: "/img/events/signage.jpg", alt: "Guests posing beside event signage reading An Intimate Dinner in Honor of Women's History Month" },
+];
 
 const EVENT_TYPES = [
   "Corporate events",
@@ -99,6 +112,33 @@ export default function EventCoveragePage() {
               or build a custom estimate →
             </Link>
           </div>
+        </Container>
+      </section>
+
+      {/* Proof before pricing — a page selling visual work has to show some. */}
+      <section className="py-16 border-t border-rule">
+        <Container>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {GALLERY.map((img, i) => (
+              <Reveal key={img.src} delay={(i % 3) * 0.08}>
+                <div className="relative aspect-16/9 overflow-hidden rounded-md bg-surface">
+                  <Image
+                    src={img.src}
+                    alt={img.alt}
+                    fill
+                    sizes="(max-width: 640px) 92vw, (max-width: 1024px) 46vw, 30vw"
+                    className="object-cover transition-transform duration-700 hover:scale-[1.04]"
+                  />
+                </div>
+              </Reveal>
+            ))}
+          </div>
+          <Reveal>
+            <p className="text-muted text-[0.85rem] mt-5">
+              Walk Like Her × Secure — an intimate dinner in honor of Women&apos;s History Month.
+              Guest candids, details, service, and sponsor signage from a single evening.
+            </p>
+          </Reveal>
         </Container>
       </section>
 
