@@ -29,6 +29,12 @@ const cols = [
   },
 ];
 
+const legal = [
+  { href: "/privacy", label: "Privacy Policy" },
+  { href: "/terms", label: "Terms" },
+  { href: "/offer-terms", label: "Coupon Terms" },
+];
+
 export function Footer() {
   return (
     <footer className="border-t border-rule py-12">
@@ -57,9 +63,20 @@ export function Footer() {
             ))}
           </div>
         </div>
-        <p className="text-[0.8rem] text-muted mt-10 pt-6 border-t border-rule">
-          © {new Date().getFullYear()} Gray Content Studio. All rights reserved.
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-10 pt-6 border-t border-rule">
+          <p className="text-[0.8rem] text-muted">
+            © {new Date().getFullYear()} Gray Content Studio. All rights reserved.
+          </p>
+          <ul className="flex flex-wrap items-center gap-x-5 gap-y-1">
+            {legal.map((l) => (
+              <li key={l.href}>
+                <Link href={l.href} className="text-[0.8rem] text-muted hover:text-ink transition-colors">
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </footer>
   );

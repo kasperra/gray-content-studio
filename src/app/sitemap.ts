@@ -26,5 +26,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: "yearly" as const,
     priority: 0.6,
   }));
-  return [...statics, ...work, ...industries, ...blog];
+  const legal = ["/privacy", "/terms", "/offer-terms"].map((p) => ({
+    url: `${BASE}${p}`,
+    changeFrequency: "yearly" as const,
+    priority: 0.2,
+  }));
+  return [...statics, ...work, ...industries, ...blog, ...legal];
 }
