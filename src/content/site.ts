@@ -55,6 +55,10 @@ export const SERVICES = [
     title: "Monthly Content Packages",
     outcome: "A always-on content engine: reels, shorts, and social video delivered on a monthly cadence.",
   },
+  {
+    title: "Event Coverage",
+    outcome: "Photography and video that capture the people, energy, and detail of galas, conferences, fundraisers, and launches — delivered as a gallery and social-ready clips.",
+  },
 ];
 
 export const PROCESS_STEPS = [
@@ -233,9 +237,87 @@ export const PACKAGES: Package[] = [
   },
 ];
 
+/* One-time event coverage — a separate ladder from the packages above. These
+   are alternatives sized to the event, not tiers that stack, so they get their
+   own array rather than being appended to PACKAGES (which renders as a
+   three-column grid on both the home page and /pricing). */
+export const EVENT_PACKAGES: Package[] = [
+  {
+    name: "Event Essentials",
+    price: "from $450",
+    tagline: "Polished photography for smaller events and gatherings.",
+    includes: [
+      "Up to 2 hours of coverage",
+      "40+ professionally edited photographs",
+      "Guest candids and key moments",
+      "Detail, décor, signage, and branding",
+      "Online gallery — 5–7 business days",
+    ],
+    note: "Best for networking events, business breakfasts, panels, grand openings, and intimate fundraisers.",
+    bundleId: "event-essentials",
+  },
+  {
+    name: "Event Story",
+    price: "from $850",
+    tagline: "Photo and video together — documented and ready to post.",
+    includes: [
+      "Up to 4 hours of coverage",
+      "75+ professionally edited photographs",
+      "30–45 second vertical event recap",
+      "2 vertical micro-content clips",
+      "Pre-event shot-list planning",
+      "Online gallery — 4–6 business days",
+    ],
+    note: "Best for corporate events, fundraisers, brand activations, awards programs, and medium-sized galas.",
+    bundleId: "event-story",
+  },
+  {
+    name: "Event Spotlight",
+    price: "from $1,400",
+    tagline: "A full content library from a major event.",
+    includes: [
+      "Up to 6 hours of coverage",
+      "125+ professionally edited photographs",
+      "60–90 second cinematic recap",
+      "3–4 vertical micro-content clips",
+      "Intentional sponsor and partner coverage",
+      "Full pre-event coverage planning",
+      "Online gallery — 3–5 business days",
+    ],
+    note: "Best for galas, conferences, major fundraisers, awards ceremonies, and large corporate events.",
+    bundleId: "event-spotlight",
+  },
+];
+
+/** À la carte upgrades on any event package. Mirrors the Event Coverage lines
+    in modules/pricing/data.ts — the calculator is the source of truth for the
+    priced ones; speaker recording is quoted per event and has no fixed rate. */
+export const EVENT_UPGRADES: { name: string; price: string }[] = [
+  { name: "Additional coverage", price: "+$125/hour" },
+  { name: "Additional photographer", price: "from $300" },
+  { name: "Additional videographer", price: "from $400" },
+  { name: "24–48 hour photo selects", price: "+$150" },
+  { name: "Same-day social selects", price: "+$200" },
+  { name: "Additional vertical reel", price: "$175" },
+  { name: "On-site headshots", price: "from $250" },
+  { name: "Drone coverage", price: "from $250, where permitted" },
+  { name: "Full speaker / presentation recording", price: "Custom quote" },
+  { name: "Travel", price: "First 25 round-trip miles included, then $0.75/mile" },
+];
+
 export type Faq = { q: string; a: string; category: string };
 
 export const FAQS: Faq[] = [
+  {
+    q: "Do you cover events?",
+    a: "Yes — event coverage is a one-time service with three packages: Event Essentials from $450 (up to 2 hours, 40+ edited photos), Event Story from $850 (up to 4 hours, 75+ photos, a vertical recap video and 2 social clips), and Event Spotlight from $1,400 (up to 6 hours, 125+ photos, a cinematic recap and 3–4 clips). Every package includes guest, speaker, sponsor, detail and branding coverage plus an online gallery. We cover corporate events, galas, fundraisers, conferences, networking events, awards programs, grand openings, and community events.",
+    category: "Pricing",
+  },
+  {
+    q: "How quickly do we get our event photos?",
+    a: "Standard turnaround is 5–7 business days for Event Essentials, 4–6 for Event Story, and 3–5 for Event Spotlight, all delivered to an online gallery. If you need images sooner, 24–48 hour photo selects are +$150 and same-day social selects are +$200 — worth adding when the event is part of a campaign that needs to post while it is still news.",
+    category: "Process",
+  },
   {
     q: "How much does a video project cost?",
     a: "Projects are quoted from a transparent rate card — most social content packages start around $1,400/month, brand films around $3,800, and full commercial campaigns from $6,500. Use the pricing calculator on our Pricing page to build a real-time estimate for your exact scope, or submit an inquiry for a custom quote within one business day.",

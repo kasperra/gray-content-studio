@@ -5,7 +5,7 @@ import { BLOG_POSTS, INDUSTRIES } from "@/content/site";
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://gray-content-studio.vercel.app";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const statics = ["", "/work", "/pricing", "/process", "/blog", "/faq"].map((p) => ({
+  const statics = ["", "/work", "/pricing", "/event-coverage", "/process", "/blog", "/faq"].map((p) => ({
     url: `${BASE}${p}`,
     changeFrequency: "weekly" as const,
     priority: p === "" ? 1 : 0.8,

@@ -84,7 +84,7 @@ export default function HomePage() {
             title="Services built around business outcomes"
             lede="Every service exists to do a job for your business — win the listing, fill the class, close the enterprise deal."
           />
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
             {SERVICES.map((s, i) => (
               <Reveal key={s.title} delay={(i % 4) * 0.1}>
                 <div className="relative border-t border-rule pt-6 h-full before:content-[''] before:absolute before:-top-px before:left-0 before:w-12 before:h-px before:bg-accent">
@@ -241,6 +241,14 @@ export default function HomePage() {
           </div>
           <Reveal className="mt-10 text-center">
             <ButtonGold href="/pricing">Build Your Estimate</ButtonGold>
+            <p className="mt-6">
+              <Link
+                href="/event-coverage"
+                className="text-muted text-[0.9rem] hover:text-ink transition-colors"
+              >
+                Covering a one-time event? Event packages from $450 →
+              </Link>
+            </p>
           </Reveal>
         </Container>
       </section>

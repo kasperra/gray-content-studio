@@ -6,7 +6,7 @@ import { PricingPackages } from "./PricingPackages";
 export const metadata: Metadata = {
   title: "Pricing & Estimate Calculator",
   description:
-    "Transparent video production pricing — package examples and a real-time estimate calculator built on Gray Content Studio's public rate card.",
+    "Transparent video production and event coverage pricing — package examples, event photography and video packages from $450, and a real-time estimate calculator built on Gray Content Studio's public rate card.",
 };
 
 export default function PricingPage() {
@@ -19,8 +19,8 @@ export default function PricingPage() {
             Real numbers, before the sales call
           </h1>
           <p className="text-muted text-[1.06rem] max-w-136 mt-5">
-            Our rate card is public. Start from a package below, or build your exact scope in the
-            calculator — then send it to us as an inquiry.
+            Our rate card is public. Start from a production package or an event coverage package
+            below, or build your exact scope in the calculator — then send it to us as an inquiry.
           </p>
         </Container>
       </section>

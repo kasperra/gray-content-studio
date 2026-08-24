@@ -36,7 +36,11 @@ export default async function ProposalsPage() {
             className="rounded-full border border-rule text-[0.82rem] font-medium px-4 py-1.5 text-muted hover:text-accent hover:border-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           >
             {b.name}
-            <span className="text-muted/60"> · {Object.keys(b.selections).length} services</span>
+            <span className="text-muted/60">
+              {" · "}
+              {Object.keys(b.selections).length}
+              {Object.keys(b.selections).length === 1 ? " service" : " services"}
+            </span>
           </Link>
         ))}
       </div>

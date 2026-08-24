@@ -181,7 +181,8 @@ export function ProposalBuilder({
                 <span className="block text-accent text-[0.82rem] font-semibold mt-0.5">{b.from}</span>
                 <span className="block text-muted text-[0.82rem] mt-2">{b.tagline}</span>
                 <span className="block text-muted/70 text-[0.75rem] mt-2">
-                  {Object.keys(b.selections).length} services
+                  {Object.keys(b.selections).length}
+                  {Object.keys(b.selections).length === 1 ? " service" : " services"}
                   {active ? " · loaded" : ""}
                 </span>
               </button>
