@@ -3,6 +3,8 @@
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createSupabaseAdmin, supabaseConfigured } from "@/lib/supabase/server";
+import { sendMail } from "@/lib/mail";
+import { renderCouponEmail } from "./email";
 import {
   CONSENT_VERSION,
   OFFER_DEFAULTS,
@@ -24,6 +26,13 @@ const CONFIG_TABLE = "diagnostic_config"; // shared site config store, see 0004
 
 function connected() {
   return supabaseConfigured() && Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
+/** Outbound mail is opt-in on env, so skip the render entirely when it's off. */
+function mailerReady() {
+  return Boolean(
+    process.env.RESEND_API_KEY && (process.env.MAIL_FROM_EMAIL || process.env.DIAGNOSTIC_FROM_EMAIL)
+  );
 }
 
 /** Crude per-IP throttle, same shape as the diagnostic's. Resets on cold start:
@@ -82,6 +91,9 @@ export type ClaimResult = {
   code?: string;
   expiresAt?: string;
   discountLabel?: string;
+  /** True when the code was also delivered by email, so the success screen can
+      say so rather than claiming a send that never happened. */
+  emailed?: boolean;
 };
 
 /** Issue (or re-issue) this visitor's coupon and put them on the CRM board.
@@ -233,6 +245,42 @@ export async function claimOffer(input: ClaimInput): Promise<ClaimResult> {
 
   if (leadId) await admin.from("offer_claims").update({ lead_id: leadId }).eq("id", claimId);
 
+  // Deliver the code so it survives the tab being closed. Best-effort: the
+  // coupon exists and is on screen regardless, so a mailer problem must never
+  // fail the claim.
+  //
+  // Only ever sent on first issuance — a repeat claim returns above without
+  // reaching here. That caps this at one message per address for all time, so
+  // it can't be pointed at someone else's inbox more than once.
+  let emailed = false;
+  if (mailerReady()) {
+    try {
+      const sent = await sendMail(
+        email,
+        renderCouponEmail({
+          code,
+          discountLabel: settings.discountLabel,
+          discountNote: settings.discountNote,
+          eligibility: settings.eligibility,
+          expiresAt: expiry,
+          answerLabel: choice.label,
+        }),
+        "offer"
+      );
+      // Tolerates the 0005 column being absent, like the estimate column in
+      // modules/leads/actions.ts — migrations are applied by hand.
+      emailed = sent;
+      if (sent) {
+        await admin
+          .from("offer_claims")
+          .update({ coupon_emailed_at: new Date().toISOString() })
+          .eq("id", claimId);
+      }
+    } catch (err) {
+      console.error("[offer] coupon email failed", err);
+    }
+  }
+
   revalidatePath("/admin");
   revalidatePath("/admin/crm");
   revalidatePath("/admin/offer");
@@ -243,6 +291,7 @@ export async function claimOffer(input: ClaimInput): Promise<ClaimResult> {
     code,
     expiresAt: expiry.toISOString(),
     discountLabel: settings.discountLabel,
+    emailed,
   };
 }
 

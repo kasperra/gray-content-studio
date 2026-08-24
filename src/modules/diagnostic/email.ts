@@ -1,3 +1,4 @@
+import { envStr, mailFrom, sendMail } from "@/lib/mail";
 import { DIMENSION_LABELS, type Result } from "./types";
 import { BOTTLENECK_COPY, STAGES } from "./content";
 import { stageMeta } from "./scoring";
@@ -179,50 +180,12 @@ export function renderDiagnosticEmail(opts: {
   return { subject, html, text };
 }
 
-/** Sends via Resend. Returns false (never throws) when unconfigured or failing —
-    a delivery problem must never cost us the captured lead. */
+/** Sends the diagnostic result. Thin wrapper over the shared mail transport. */
 export async function sendDiagnosticEmail(
   to: string,
   message: { subject: string; html: string; text: string }
 ): Promise<boolean> {
-  const key = envStr("RESEND_API_KEY");
-  const from = envStr("DIAGNOSTIC_FROM_EMAIL");
-  if (!key || !from) return false;
-
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from,
-        to: [to],
-        subject: message.subject,
-        html: message.html,
-        text: message.text,
-        ...(envStr("DIAGNOSTIC_REPLY_TO") ? { reply_to: envStr("DIAGNOSTIC_REPLY_TO") } : {}),
-      }),
-    });
-    if (!res.ok) {
-      console.error("[diagnostic] email send failed", res.status, await res.text().catch(() => ""));
-      return false;
-    }
-    return true;
-  } catch (err) {
-    console.error("[diagnostic] email send threw", err);
-    return false;
-  }
-}
-
-/** Env values pasted into a dashboard routinely carry a trailing newline or
-    wrapping quotes; either produces a malformed header and a confusing 401. */
-function envStr(name: string): string | undefined {
-  const raw = process.env[name];
-  if (typeof raw !== "string") return undefined;
-  const clean = raw.trim().replace(/^["']|["']$/g, "").trim();
-  return clean || undefined;
+  return sendMail(to, message, "diagnostic");
 }
 
 export type MailerStatus = {
@@ -241,7 +204,7 @@ export type MailerStatus = {
     never returns the API key — only booleans and Resend's own domain status. */
 export async function checkMailer(): Promise<MailerStatus> {
   const key = envStr("RESEND_API_KEY");
-  const from = envStr("DIAGNOSTIC_FROM_EMAIL") ?? null;
+  const from = mailFrom() ?? null;
   const base: MailerStatus = {
     keySet: Boolean(key),
     fromSet: Boolean(from),

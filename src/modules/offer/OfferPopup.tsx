@@ -75,6 +75,7 @@ export function OfferPopup() {
   const [code, setCode] = useState("");
   const [expiry, setExpiry] = useState("");
   const [copied, setCopied] = useState(false);
+  const [emailed, setEmailed] = useState(false);
 
   const pathname = usePathname();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -214,6 +215,7 @@ export function OfferPopup() {
             })
           : ""
       );
+      setEmailed(Boolean(res.emailed));
       writeState({ done: Date.now() });
       setPhase("done");
     } catch {
@@ -428,6 +430,12 @@ export function OfferPopup() {
               {settings.discountLabel}
               {expiry ? ` · valid through ${expiry}` : ""}
             </p>
+            {emailed && (
+              <p className="text-[0.88rem] text-accent mt-2">
+                We&apos;ve emailed it to {email.trim().toLowerCase()} as well, so you don&apos;t have
+                to keep this open.
+              </p>
+            )}
 
             <div className="mt-6 rounded-lg border border-accent/40 bg-accent-soft p-5 flex items-center justify-between gap-4 flex-wrap">
               <code

@@ -1,5 +1,6 @@
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { getOfferSettings, deleteOfferClaim } from "@/modules/offer/actions";
+import { checkMailer } from "@/modules/diagnostic/email";
 import { OFFER_CHOICES } from "@/modules/offer/config";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { OfferSettingsEditor } from "./OfferSettingsEditor";
@@ -20,6 +21,7 @@ type Claim = {
   discount_label: string | null;
   expires_at: string | null;
   redeemed_at: string | null;
+  coupon_emailed_at?: string | null;
   email_consent: boolean;
   sms_consent: boolean;
   consent_version: string | null;
@@ -47,9 +49,10 @@ function isExpired(c: { redeemed_at: string | null; expires_at: string | null })
 
 export default async function AdminOfferPage() {
   const supabase = await createSupabaseServer();
-  const [{ data, error }, settings] = await Promise.all([
+  const [{ data, error }, settings, mailer] = await Promise.all([
     supabase.from("offer_claims").select("*").order("created_at", { ascending: false }).limit(500),
     getOfferSettings(),
+    checkMailer(),
   ]);
 
   // The migration is applied by hand, so explain rather than error.
@@ -92,6 +95,21 @@ export default async function AdminOfferPage() {
           CRM board
         </a>
         . This page is the coupon and consent record behind those leads.
+      </p>
+
+      {/* Whether codes are actually reaching inboxes, not just the screen. */}
+      <p className="text-[0.85rem] mb-7 -mt-4">
+        {mailer.keySet && mailer.fromSet ? (
+          <span className="text-muted">
+            Coupon codes are emailed from <span className="text-ink">{mailer.from}</span> when a code
+            is first issued.
+          </span>
+        ) : (
+          <span className="text-[#d98a7a]">
+            Codes are shown on screen only — outbound email isn&apos;t configured on this deployment,
+            so nothing is sent.
+          </span>
+        )}
       </p>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
@@ -173,6 +191,7 @@ export default async function AdminOfferPage() {
                         <span className="block text-muted text-[0.78rem]">
                           {c.discount_label}
                           {c.expires_at ? ` · ${expiredNow ? "expired" : "expires"} ${short(c.expires_at)}` : ""}
+                          {c.coupon_emailed_at ? " · emailed" : ""}
                         </span>
                       </td>
                       <td className="py-3 pr-4 hidden sm:table-cell text-muted text-[0.8rem] whitespace-nowrap">
