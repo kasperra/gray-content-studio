@@ -432,8 +432,11 @@ export function OfferPopup() {
             </p>
             {emailed && (
               <p className="text-[0.88rem] text-accent mt-2">
-                We&apos;ve emailed it to {email.trim().toLowerCase()} as well, so you don&apos;t have
-                to keep this open.
+                {/* Explicit {" "} — JSX drops the space between an expression and
+                    the text that follows it across a line break. */}
+                We&apos;ve emailed it to{" "}
+                <span className="text-ink">{email.trim().toLowerCase()}</span>{" "}
+                as well, so you don&apos;t have to keep this open.
               </p>
             )}
 
