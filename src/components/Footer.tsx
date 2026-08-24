@@ -14,6 +14,7 @@ const cols = [
   {
     title: "Resources",
     links: [
+      { href: "/diagnostic", label: "Content Diagnostic" },
       { href: "/blog", label: "Blog" },
       { href: "/faq", label: "FAQ" },
       { href: "/industries/real-estate", label: "Industries" },

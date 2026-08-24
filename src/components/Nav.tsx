@@ -21,6 +21,7 @@ export function Wordmark({ className = "" }: { className?: string }) {
 const links = [
   { href: "/work", label: "Work" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/diagnostic", label: "Diagnostic" },
   { href: "/process", label: "Process" },
   { href: "/blog", label: "Blog" },
   { href: "/portal", label: "Client Login" },
@@ -73,7 +74,7 @@ export function Nav() {
         <Wordmark />
 
         {/* Desktop navigation */}
-        <nav className="hidden md:flex items-center gap-6 lg:gap-9">
+        <nav className="hidden lg:flex items-center gap-5 xl:gap-8">
           {links.map((l) => {
             const active = isActive(pathname, l.href);
             return (
@@ -106,7 +107,7 @@ export function Nav() {
           aria-controls="mobile-menu"
           aria-label={open ? "Close menu" : "Open menu"}
           onClick={() => setOpen((o) => !o)}
-          className={`md:hidden relative -mr-2 grid h-11 w-11 place-items-center rounded-full text-ink ${focusRing}`}
+          className={`lg:hidden relative -mr-2 grid h-11 w-11 place-items-center rounded-full text-ink ${focusRing}`}
         >
           <span className="relative block h-4 w-6" aria-hidden="true">
             <span
@@ -133,7 +134,7 @@ export function Nav() {
           backdrop-filter can't turn the panel's background transparent. */}
       <div
         id="mobile-menu"
-        className={`md:hidden fixed inset-x-0 top-[76px] bottom-0 z-40 bg-bg transition-[opacity,transform] duration-300 ease-out ${
+        className={`lg:hidden fixed inset-x-0 top-[76px] bottom-0 z-40 bg-bg transition-[opacity,transform] duration-300 ease-out ${
           open ? "opacity-100 translate-y-0" : "pointer-events-none opacity-0 -translate-y-2"
         }`}
       >

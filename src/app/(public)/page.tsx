@@ -171,6 +171,45 @@ export default function HomePage() {
         </Container>
       </section>
 
+      {/* Diagnostic — the lead magnet, placed just before pricing so a visitor
+          who isn't sure what they need has a route other than bouncing. */}
+      <section className="py-24 border-t border-rule bg-[radial-gradient(70%_60%_at_30%_0%,var(--color-accent-soft),transparent_55%)]">
+        <Container>
+          <div className="grid lg:grid-cols-[1.15fr_1fr] gap-10 lg:gap-16 items-center">
+            <Reveal>
+              <Eyebrow>Free Diagnostic</Eyebrow>
+              <SectionTitle>Not sure what your content actually needs?</SectionTitle>
+              <p className="text-muted text-[1.02rem] leading-relaxed max-w-[56ch] mt-5">
+                Answer a few strategic questions and we&apos;ll identify the single bottleneck
+                limiting your content&apos;s business results — plus a personalized roadmap for
+                what to fix first. Free, and takes about two minutes.
+              </p>
+              <div className="flex flex-wrap items-center gap-6 mt-9">
+                <ButtonGold href="/diagnostic">Diagnose My Content</ButtonGold>
+                <span className="text-muted text-[0.88rem]">No email required to see your result.</span>
+              </div>
+            </Reveal>
+            <Reveal delay={0.12}>
+              <ol className="grid sm:grid-cols-2 lg:grid-cols-1 gap-x-8 gap-y-4">
+                {[
+                  "Your content growth stage",
+                  "Your biggest bottleneck",
+                  "What's blocking the next stage",
+                  "A 30-day plan built from your answers",
+                ].map((line, i) => (
+                  <li key={line} className="flex gap-3.5 items-baseline text-[0.95rem] text-ink/85 border-t border-rule pt-3">
+                    <span className="font-display italic text-accent shrink-0">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    {line}
+                  </li>
+                ))}
+              </ol>
+            </Reveal>
+          </div>
+        </Container>
+      </section>
+
       {/* Packages teaser */}
       <section className="py-28 border-t border-rule">
         <Container>
