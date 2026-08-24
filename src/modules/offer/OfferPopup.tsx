@@ -78,6 +78,7 @@ export function OfferPopup() {
 
   const pathname = usePathname();
   const panelRef = useRef<HTMLDivElement>(null);
+  const codeRef = useRef<HTMLElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
 
   const close = useCallback(
@@ -223,10 +224,32 @@ export function OfferPopup() {
   };
 
   const copy = async () => {
+    setError("");
     try {
       await navigator.clipboard.writeText(code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2200);
+      return;
+    } catch {
+      /* clipboard permission denied or unavailable — fall through */
+    }
+    // Fallback: select the code so a copy is one keystroke away even where the
+    // async clipboard API is blocked. Losing the code is not an acceptable
+    // outcome of a button whose only job is handing it over.
+    try {
+      const node = codeRef.current;
+      if (!node) throw new Error("no node");
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+      if (document.execCommand("copy")) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2200);
+        return;
+      }
+      setError("Your code is selected above — press Ctrl/Cmd + C to copy it.");
     } catch {
       setError("Couldn't copy automatically — select the code above to copy it.");
     }
@@ -407,7 +430,10 @@ export function OfferPopup() {
             </p>
 
             <div className="mt-6 rounded-lg border border-accent/40 bg-accent-soft p-5 flex items-center justify-between gap-4 flex-wrap">
-              <code className="font-display text-[1.35rem] font-semibold tracking-[0.12em] text-accent select-all">
+              <code
+                ref={codeRef}
+                className="font-display text-[1.35rem] font-semibold tracking-[0.12em] text-accent select-all"
+              >
                 {code}
               </code>
               <button
@@ -421,6 +447,11 @@ export function OfferPopup() {
                 {copied ? "Coupon code copied to clipboard" : ""}
               </span>
             </div>
+            {error && (
+              <p role="alert" className="text-[0.85rem] mt-3" style={{ color: "#d98a7a" }}>
+                {error}
+              </p>
+            )}
             <p className="text-muted text-[0.78rem] mt-3 leading-relaxed">{settings.eligibility}</p>
 
             <div className="mt-8 border-t border-rule pt-6">

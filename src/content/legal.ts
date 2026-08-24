@@ -9,8 +9,8 @@
    registered postal address before running the offer popup or any email campaign. */
 export const LEGAL = {
   entity: "Gray Content Studio",
-  email: "hello@graycontentstudio.co",
+  email: "kasra@graycontentstudio.co",
   /** Placeholder — must be a real, monitored postal address. */
-  postalAddress: "Gray Content Studio, [street address], [city], [state] [ZIP], United States",
+  postalAddress: "Gray Content Studio, 815 Porter Street, Richmond, VA 23224, United States",
   lastUpdated: "August 24, 2026",
 } as const;

@@ -23,6 +23,9 @@ export async function GET() {
       smsEnabled: s.smsEnabled,
       eligibility: s.eligibility,
     },
-    { headers: { "Cache-Control": "public, max-age=0, s-maxage=60, stale-while-revalidate=300" } }
+    // No stale-while-revalidate: the browser must revalidate every load, so an
+    // admin settings change reaches returning visitors within the CDN window
+    // rather than up to five minutes later.
+    { headers: { "Cache-Control": "public, max-age=0, s-maxage=60" } }
   );
 }
