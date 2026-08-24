@@ -231,6 +231,8 @@ export type MailerStatus = {
   from: string | null;
   /** null when we couldn't ask Resend (no key, or the request failed). */
   domains: { name: string; status: string }[] | null;
+  /** Key works for sending but isn't permitted to read domain status. */
+  restrictedKey?: boolean;
   error: string | null;
 };
 
@@ -254,17 +256,31 @@ export async function checkMailer(): Promise<MailerStatus> {
       headers: { Authorization: `Bearer ${key}` },
       cache: "no-store",
     });
+
     if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      // A sending-only key is valid for delivery but not permitted to read
+      // /domains, and Resend answers that with a 401 as well. Treat it as
+      // configured rather than broken — the send path is what matters.
+      if (res.status === 401 && /restrict/i.test(body)) {
+        return {
+          ...base,
+          restrictedKey: true,
+          error:
+            "Key is valid but scoped to sending only, so domain status can't be read here. Sending is unaffected.",
+        };
+      }
       const detail =
         res.status === 401
           ? "Resend rejected the API key (401). The value is present but not a valid key — most often it was copied truncated from the key list rather than at creation. Create a fresh key in Resend, copy it immediately, re-save it in Vercel and redeploy."
           : `Resend rejected the request (HTTP ${res.status}).`;
       return { ...base, error: detail };
     }
-    const body = (await res.json()) as { data?: { name?: string; status?: string }[] };
+
+    const parsed = (await res.json()) as { data?: { name?: string; status?: string }[] };
     return {
       ...base,
-      domains: (body.data ?? []).map((d) => ({
+      domains: (parsed.data ?? []).map((d) => ({
         name: d.name ?? "unknown",
         status: d.status ?? "unknown",
       })),

@@ -34,7 +34,8 @@ export async function MailerStatus() {
 
   // Resend marks a domain "verified" once every record it asked for resolves.
   const verified = s.domains?.filter((d) => d.status === "verified") ?? [];
-  const sending = s.keySet && s.fromSet && verified.length > 0;
+  // A sending-scoped key can't read /domains, so treat it as good to go.
+  const sending = s.keySet && s.fromSet && (verified.length > 0 || s.restrictedKey === true);
 
   return (
     <section className="mt-14" aria-labelledby="mailer">
@@ -60,7 +61,14 @@ export async function MailerStatus() {
           color={s.fromSet ? OK : BAD}
         />
 
-        {s.error ? (
+        {s.restrictedKey ? (
+          <Row
+            label="Resend"
+            value="Key valid — scoped to sending only"
+            color={OK}
+            note="Domain verification status can't be read with a sending-only key. Use a Full access key if you want it shown here."
+          />
+        ) : s.error ? (
           <Row label="Resend" value={s.error} color={BAD} />
         ) : s.domains === null ? (
           <Row label="Resend domains" value="Not checked" color={WARN} />
