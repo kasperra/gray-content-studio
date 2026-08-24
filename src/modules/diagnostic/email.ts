@@ -185,8 +185,8 @@ export async function sendDiagnosticEmail(
   to: string,
   message: { subject: string; html: string; text: string }
 ): Promise<boolean> {
-  const key = process.env.RESEND_API_KEY;
-  const from = process.env.DIAGNOSTIC_FROM_EMAIL;
+  const key = envStr("RESEND_API_KEY");
+  const from = envStr("DIAGNOSTIC_FROM_EMAIL");
   if (!key || !from) return false;
 
   try {
@@ -202,7 +202,7 @@ export async function sendDiagnosticEmail(
         subject: message.subject,
         html: message.html,
         text: message.text,
-        ...(process.env.DIAGNOSTIC_REPLY_TO ? { reply_to: process.env.DIAGNOSTIC_REPLY_TO } : {}),
+        ...(envStr("DIAGNOSTIC_REPLY_TO") ? { reply_to: envStr("DIAGNOSTIC_REPLY_TO") } : {}),
       }),
     });
     if (!res.ok) {
@@ -214,6 +214,15 @@ export async function sendDiagnosticEmail(
     console.error("[diagnostic] email send threw", err);
     return false;
   }
+}
+
+/** Env values pasted into a dashboard routinely carry a trailing newline or
+    wrapping quotes; either produces a malformed header and a confusing 401. */
+function envStr(name: string): string | undefined {
+  const raw = process.env[name];
+  if (typeof raw !== "string") return undefined;
+  const clean = raw.trim().replace(/^["']|["']$/g, "").trim();
+  return clean || undefined;
 }
 
 export type MailerStatus = {
@@ -229,8 +238,8 @@ export type MailerStatus = {
     what Resend says about the sending domain's verification. Read-only, and it
     never returns the API key — only booleans and Resend's own domain status. */
 export async function checkMailer(): Promise<MailerStatus> {
-  const key = process.env.RESEND_API_KEY;
-  const from = process.env.DIAGNOSTIC_FROM_EMAIL ?? null;
+  const key = envStr("RESEND_API_KEY");
+  const from = envStr("DIAGNOSTIC_FROM_EMAIL") ?? null;
   const base: MailerStatus = {
     keySet: Boolean(key),
     fromSet: Boolean(from),
@@ -246,7 +255,11 @@ export async function checkMailer(): Promise<MailerStatus> {
       cache: "no-store",
     });
     if (!res.ok) {
-      return { ...base, error: `Resend rejected the API key (HTTP ${res.status}).` };
+      const detail =
+        res.status === 401
+          ? "Resend rejected the API key (401). The value is present but not a valid key — most often it was copied truncated from the key list rather than at creation. Create a fresh key in Resend, copy it immediately, re-save it in Vercel and redeploy."
+          : `Resend rejected the request (HTTP ${res.status}).`;
+      return { ...base, error: detail };
     }
     const body = (await res.json()) as { data?: { name?: string; status?: string }[] };
     return {
