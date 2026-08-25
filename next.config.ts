@@ -16,9 +16,14 @@ const nextConfig: NextConfig = {
     if (!isProduction) return [];
     return [
       {
-        source: "/:path*",
+        // Everything except Google's ownership-verification files. Search
+        // Console requires a 200 at the exact verification URL and does not
+        // follow a redirect to another host, so a blanket redirect would make
+        // the .vercel.app property impossible to verify — and that property is
+        // how we watch these redirects consolidate the duplicate index.
+        source: "/:path((?!google[0-9a-z]+\\.html$).*)",
         has: [{ type: "host", value: "(?<vercelHost>.*\\.vercel\\.app)" }],
-        destination: "https://www.graycontentstudio.co/:path*",
+        destination: "https://www.graycontentstudio.co/:path",
         permanent: true,
       },
     ];
