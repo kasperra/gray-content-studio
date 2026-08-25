@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Archivo, Hanken_Grotesk } from "next/font/google";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 // Brand display face — bold, wide, modern (Google-Fonts stand-in for "Horizon").
@@ -20,9 +21,10 @@ const hanken = Hanken_Grotesk({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://gray-content-studio.vercel.app"
-  ),
+  metadataBase: new URL(SITE_URL),
+  // "./" resolves per-route, so every page gets a self-referencing canonical
+  // instead of leaving the choice of hostname to the crawler.
+  alternates: { canonical: "./" },
   title: {
     default: "Gray Content Studio — Video Production, Editing & Animation",
     template: "%s — Gray Content Studio",

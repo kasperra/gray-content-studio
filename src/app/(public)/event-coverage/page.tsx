@@ -1,19 +1,28 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { EVENT_PACKAGES, EVENT_UPGRADES } from "@/content/site";
+import { EVENT_PACKAGES, EVENT_UPGRADES, FAQS } from "@/content/site";
 import { Container } from "@/components/sections";
 import { Eyebrow, ButtonGold, SectionTitle } from "@/components/Buttons";
 import { Reveal } from "@/components/Reveal";
+import { SITE_URL as SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Event Photography & Video Coverage",
   description:
     "Professional event photography and video coverage from $450 — galas, conferences, fundraisers, awards programs, grand openings, and corporate events. Edited gallery, vertical recap video, and social-ready clips.",
   alternates: { canonical: "/event-coverage" },
+  // Overrides the site-wide OG image — sharing an event page with a radio
+  // network's logo on the card says nothing about event coverage.
+  openGraph: {
+    title: "Event Photography & Video Coverage — Gray Content Studio",
+    description:
+      "Event photography and video coverage from $450 — galas, conferences, fundraisers, awards programs, and corporate events.",
+    images: [{ url: "/img/events/og.jpg", width: 1200, height: 630, alt: "Guests at an evening dinner event covered by Gray Content Studio" }],
+  },
+  twitter: { card: "summary_large_image", images: ["/img/events/og.jpg"] },
 };
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.graycontentstudio.co";
 
 /* One Service entity per package, so each package's price and inclusions are
    eligible to surface on their own rather than as one undifferentiated blob. */
@@ -52,6 +61,10 @@ const GALLERY = [
   { src: "/img/events/service.jpg", alt: "A server pouring wine beside a table centerpiece of red and orange florals" },
   { src: "/img/events/signage.jpg", alt: "Guests posing beside event signage reading An Intimate Dinner in Honor of Women's History Month" },
 ];
+
+/* Pulled from the one FAQ list rather than restated, so an edit on /faq can't
+   leave this page quietly contradicting it. */
+const EVENT_FAQS = FAQS.filter((f) => /event/i.test(f.q));
 
 const EVENT_TYPES = [
   "Corporate events",
@@ -246,6 +259,36 @@ export default function EventCoveragePage() {
           </div>
         </Container>
       </section>
+
+      {/* The answers, not the schema: /faq already owns the FAQPage markup for
+          these two, and duplicating it across pages competes with itself. */}
+      {EVENT_FAQS.length > 0 && (
+        <section className="py-20 border-t border-rule">
+          <Container>
+            <Reveal className="mb-8">
+              <Eyebrow>Before you book</Eyebrow>
+              <SectionTitle className="text-[clamp(1.6rem,3.5vw,2.4rem)]">
+                Questions we get asked
+              </SectionTitle>
+            </Reveal>
+            <div className="grid gap-8 max-w-[70ch]">
+              {EVENT_FAQS.map((f, i) => (
+                <Reveal key={f.q} delay={i * 0.08}>
+                  <h3 className="font-display text-[1.1rem] font-semibold">{f.q}</h3>
+                  <p className="text-muted text-[0.95rem] mt-2.5 leading-relaxed">{f.a}</p>
+                </Reveal>
+              ))}
+            </div>
+            <Reveal>
+              <p className="mt-8">
+                <Link href="/faq" className="text-muted text-[0.9rem] hover:text-ink transition-colors">
+                  More questions answered →
+                </Link>
+              </p>
+            </Reveal>
+          </Container>
+        </section>
+      )}
 
       <section className="text-center py-24 border-t border-rule bg-[radial-gradient(60%_80%_at_50%_100%,var(--color-accent-soft),transparent_60%)]">
         <Container>

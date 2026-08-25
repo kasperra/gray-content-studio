@@ -1,8 +1,7 @@
 import type { MetadataRoute } from "next";
 import { CASE_STUDIES } from "@/content/case-studies";
 import { BLOG_POSTS, INDUSTRIES } from "@/content/site";
-
-const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://gray-content-studio.vercel.app";
+import { SITE_URL as BASE } from "@/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const statics = ["", "/work", "/pricing", "/event-coverage", "/process", "/blog", "/faq"].map((p) => ({

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SITE_URL } from "@/lib/site";
 import { ButtonGold, ButtonGhost, Eyebrow, SectionTitle } from "@/components/Buttons";
 import { Reveal } from "@/components/Reveal";
 import { ContactForm } from "@/components/ContactForm";
@@ -12,18 +13,18 @@ const ORG_JSONLD = {
   "@graph": [
     {
       "@type": "Organization",
-      "@id": "https://gray-content-studio.vercel.app/#org",
+      "@id": `${SITE_URL}/#org`,
       name: "Gray Content Studio",
-      url: "https://gray-content-studio.vercel.app",
+      url: SITE_URL,
       description:
         "Video production, editing, and 2D animation studio for Fortune 500 brands, campaigns, and creators.",
-      logo: "https://gray-content-studio.vercel.app/img/iheart.jpg",
+      logo: `${SITE_URL}/img/iheart.jpg`,
     },
     {
       "@type": "LocalBusiness",
       name: "Gray Content Studio",
-      "@id": "https://gray-content-studio.vercel.app/#business",
-      url: "https://gray-content-studio.vercel.app",
+      "@id": `${SITE_URL}/#business`,
+      url: SITE_URL,
       priceRange: "$$",
       areaServed: "United States",
     },
@@ -33,7 +34,7 @@ const ORG_JSONLD = {
       "@type": "Service",
       name: s.title,
       description: s.outcome,
-      provider: { "@id": "https://gray-content-studio.vercel.app/#org" },
+      provider: { "@id": `${SITE_URL}/#org` },
     })),
   ],
 };
