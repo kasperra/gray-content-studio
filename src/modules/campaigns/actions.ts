@@ -222,9 +222,11 @@ export async function submitCampaignInquiry(
       renderCustomerEmail({ campaign, inquiry: values })
     ).catch(() => false);
 
+    // Reply-to is the inquirer, so Reply in the studio inbox answers them.
     const studioSent = await sendStudioEmail(
       studioInbox(),
-      renderStudioEmail({ campaign, inquiry: values, leadId })
+      renderStudioEmail({ campaign, inquiry: values, leadId }),
+      values.email
     ).catch(() => false);
 
     if (inquiry?.id && (customerSent || studioSent)) {

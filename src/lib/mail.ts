@@ -30,21 +30,29 @@ export function mailFrom(): string | undefined {
 
 export type MailMessage = { subject: string; html: string; text: string };
 
+/** Per-message overrides of the two addresses a reply depends on.
+
+    `from` must be on a domain verified in Resend or delivery fails, so callers
+    pass an env-provided value and fall back to mailFrom() rather than
+    hardcoding an address. `replyTo` is where a reply lands, which is not always
+    the studio: a notification *about* someone is most useful when Reply reaches
+    them. Both default to the shared configuration when omitted. */
+export type SendOptions = { from?: string; replyTo?: string };
+
 /** Returns false (never throws) when unconfigured or failing — a delivery
     problem must never cost us the lead that triggered it. `tag` only labels the
-    server log so a failure can be traced to the feature that sent it.
-
-    `from` overrides the default sender for this one message. It must be on a
-    domain verified in Resend or delivery fails, so callers pass an env-provided
-    value and fall back to mailFrom() rather than hardcoding an address. */
+    server log so a failure can be traced to the feature that sent it. */
 export async function sendMail(
   to: string,
   message: MailMessage,
   tag: string,
-  from: string | undefined = mailFrom()
+  opts: SendOptions = {}
 ): Promise<boolean> {
   const key = envStr("RESEND_API_KEY");
+  const from = opts.from ?? mailFrom();
   if (!key || !from) return false;
+
+  const replyTo = opts.replyTo ?? envStr("DIAGNOSTIC_REPLY_TO");
 
   try {
     const res = await fetch("https://api.resend.com/emails", {
@@ -56,7 +64,7 @@ export async function sendMail(
         subject: message.subject,
         html: message.html,
         text: message.text,
-        ...(envStr("DIAGNOSTIC_REPLY_TO") ? { reply_to: envStr("DIAGNOSTIC_REPLY_TO") } : {}),
+        ...(replyTo ? { reply_to: replyTo } : {}),
       }),
     });
     if (!res.ok) {

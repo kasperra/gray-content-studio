@@ -18,12 +18,16 @@ import {
   validateInquiry,
   CAMPAIGN_THEMES,
   EDITABLE_FIELDS,
+  type Campaign,
 } from "./campaign";
 import { CAMPAIGNS, campaignBySlug } from "./campaigns";
-import { campaignFrom } from "./email";
+import { campaignFrom, renderStudioEmail, sendCustomerEmail, sendStudioEmail } from "./email";
 
-const fall = campaignBySlug("fall-mini-sessions");
-assert.ok(fall, "the fall campaign should exist");
+const found = campaignBySlug("fall-mini-sessions");
+assert.ok(found, "the fall campaign should exist");
+// Re-bound with the type: assert.ok narrows here, but that narrowing doesn't
+// reach inside main() below, where the async checks live.
+const fall: Campaign = found;
 
 /* ---------------------------------------------------------------- content -- */
 
@@ -209,4 +213,76 @@ assert.equal(sessionTypeLabel(fall, "unknown"), "unknown");
   console.log("sender: campaign address wins, falls back cleanly, tolerates pasted quotes ✓");
 }
 
-console.log("\ncampaigns: all checks passed");
+/* ---------------------------------------------------------- reply routing -- */
+
+/* Wrapped in main() rather than run at top level: tsx transpiles these checks
+   to CJS, and a top-level await makes the module async, which CJS can't
+   require. */
+async function main() {
+/* What actually reaches Resend. The studio's copy has to reply to the person
+   who inquired — a notification about someone that replies to yourself is the
+   kind of thing only noticed after a customer is left waiting. */
+{
+  const saved = {
+    key: process.env.RESEND_API_KEY,
+    campaign: process.env.CAMPAIGN_FROM_EMAIL,
+    reply: process.env.DIAGNOSTIC_REPLY_TO,
+    fetch: globalThis.fetch,
+  };
+
+  process.env.RESEND_API_KEY = "re_test";
+  process.env.CAMPAIGN_FROM_EMAIL = "Gray <hello@studio.test>";
+  process.env.DIAGNOSTIC_REPLY_TO = "studio@studio.test";
+
+  const sent: Record<string, unknown>[] = [];
+  globalThis.fetch = (async (_url: string, init: { body: string }) => {
+    sent.push(JSON.parse(init.body));
+    return { ok: true, status: 200, text: async () => "" };
+  }) as unknown as typeof fetch;
+
+  try {
+    const message = renderStudioEmail({
+      campaign: fall,
+      inquiry: { ...good, email: "jane@customer.test" },
+      leadId: null,
+    });
+
+    await sendStudioEmail("studio@studio.test", message, "jane@customer.test");
+    const studio = sent.at(-1)!;
+    assert.equal(studio.from, "Gray <hello@studio.test>");
+    assert.equal(studio.reply_to, "jane@customer.test", "Reply must reach the inquirer");
+
+    await sendCustomerEmail("jane@customer.test", message);
+    const customer = sent.at(-1)!;
+    assert.equal(customer.from, "Gray <hello@studio.test>");
+    assert.equal(
+      customer.reply_to,
+      "studio@studio.test",
+      "the customer's reply must still reach the studio"
+    );
+
+    // Without an explicit reply-to the shared address still applies, so the
+    // diagnostic and the offer coupon are unaffected by this change.
+    await sendStudioEmail("studio@studio.test", message);
+    assert.equal(sent.at(-1)!.reply_to, "studio@studio.test");
+  } finally {
+    globalThis.fetch = saved.fetch;
+    const restore = (k: string, v: string | undefined) => {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    };
+    restore("RESEND_API_KEY", saved.key);
+    restore("CAMPAIGN_FROM_EMAIL", saved.campaign);
+    restore("DIAGNOSTIC_REPLY_TO", saved.reply);
+  }
+  console.log("reply-to: studio copy answers the inquirer, customer copy answers the studio ✓");
+}
+}
+
+main().then(
+  () => console.log("\ncampaigns: all checks passed"),
+  (err) => {
+    console.error(err);
+    process.exit(1);
+  }
+);

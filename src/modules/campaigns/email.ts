@@ -266,10 +266,23 @@ export function campaignFrom(): string | undefined {
 }
 
 /** Thin wrappers over the shared transport, so the log tag is consistent. */
+
+/** The customer's confirmation. Reply-to is left at the shared studio address —
+    the message invites a reply if a detail is wrong, and that reply should
+    reach the studio. */
 export async function sendCustomerEmail(to: string, message: MailMessage): Promise<boolean> {
-  return sendMail(to, message, "campaign", campaignFrom());
+  return sendMail(to, message, "campaign", { from: campaignFrom() });
 }
 
-export async function sendStudioEmail(to: string, message: MailMessage): Promise<boolean> {
-  return sendMail(to, message, "campaign-studio", campaignFrom());
+/** The studio's copy. Reply-to is the person who inquired, so hitting Reply in
+    the inbox answers them directly instead of looping back to the studio's own
+    address. `replyTo` is safe to take from the form because validateInquiry has
+    already matched it against EMAIL_RE, which forbids whitespace — there is no
+    room for a second address or a header break. */
+export async function sendStudioEmail(
+  to: string,
+  message: MailMessage,
+  replyTo?: string
+): Promise<boolean> {
+  return sendMail(to, message, "campaign-studio", { from: campaignFrom(), replyTo });
 }
