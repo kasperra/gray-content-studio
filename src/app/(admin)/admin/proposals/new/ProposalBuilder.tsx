@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useSyncExternalStore, useTransition } from "react";
 import {
   EstimateBuilder,
   emptyBuilderState,
@@ -22,6 +22,59 @@ export type LoadedProposal = ProposalDetails & {
 };
 
 const OVERRIDES_KEY = "gcs_price_overrides";
+
+/* Rate overrides persist per-browser in localStorage. It's an external store,
+   so the builder subscribes to it rather than copying it into state from an
+   effect on mount — the server render and hydration both see {}, and the saved
+   rates appear on the client without a hand-written second pass. */
+
+const overrideListeners = new Set<() => void>();
+const NO_OVERRIDES: Record<string, number> = {};
+
+// getSnapshot has to return a stable reference between reads, so the parsed
+// object is memoized against the raw JSON it was read from.
+let overridesRaw: string | null = null;
+let overridesValue: Record<string, number> = NO_OVERRIDES;
+
+function getOverrides(): Record<string, number> {
+  let raw: string | null = null;
+  try {
+    raw = localStorage.getItem(OVERRIDES_KEY);
+  } catch {
+    raw = null;
+  }
+  if (raw !== overridesRaw) {
+    overridesRaw = raw;
+    try {
+      overridesValue = raw ? (JSON.parse(raw) as Record<string, number>) : NO_OVERRIDES;
+    } catch {
+      overridesValue = NO_OVERRIDES;
+    }
+  }
+  return overridesValue;
+}
+
+function getServerOverrides(): Record<string, number> {
+  return NO_OVERRIDES;
+}
+
+function subscribeToOverrides(onChange: () => void): () => void {
+  overrideListeners.add(onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    overrideListeners.delete(onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+function writeOverrides(next: Record<string, number>): void {
+  try {
+    localStorage.setItem(OVERRIDES_KEY, JSON.stringify(next));
+  } catch {
+    /* storage unavailable — the override just won't survive a reload */
+  }
+  overrideListeners.forEach((fn) => fn());
+}
 
 const fieldCls =
   "w-full font-body text-[0.95rem] text-ink bg-bg border border-rule rounded px-3.5 py-2.5 focus:outline-none focus:border-accent transition-colors";
@@ -86,15 +139,7 @@ export function ProposalBuilder({
     return emptyBuilderState();
   });
 
-  // Rate overrides persist per-browser (same behavior as the original admin panel)
-  const [overrides, setOverrides] = useState<Record<string, number>>({});
-  useEffect(() => {
-    try {
-      setOverrides(JSON.parse(localStorage.getItem(OVERRIDES_KEY) ?? "{}"));
-    } catch {
-      /* ignore */
-    }
-  }, []);
+  const overrides = useSyncExternalStore(subscribeToOverrides, getOverrides, getServerOverrides);
 
   const [savedId, setSavedId] = useState<string | undefined>(loaded?.id);
   const [publicId, setPublicId] = useState<string | undefined>();
@@ -105,8 +150,7 @@ export function ProposalBuilder({
     const next = { ...overrides };
     if (price == null) delete next[serviceId];
     else next[serviceId] = price;
-    setOverrides(next);
-    localStorage.setItem(OVERRIDES_KEY, JSON.stringify(next));
+    writeOverrides(next);
   };
 
   /** Load a package preset. Replaces the service selections; only fills title and

@@ -1,5 +1,5 @@
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { STAGES, stageLabel } from "@/modules/projects/stages";
+import { STAGES } from "@/modules/projects/stages";
 import { deleteMetric } from "@/modules/social/actions";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { MetricRecorder } from "./MetricRecorder";

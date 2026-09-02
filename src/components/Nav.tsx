@@ -43,10 +43,13 @@ export function Nav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close the drawer whenever the route changes.
-  useEffect(() => {
+  // Close the drawer whenever the route changes. Adjusted during render rather
+  // than in an effect so the drawer never paints once over the new page first.
+  const [drawerRoute, setDrawerRoute] = useState(pathname);
+  if (pathname !== drawerRoute) {
+    setDrawerRoute(pathname);
     setOpen(false);
-  }, [pathname]);
+  }
 
   // While the drawer is open: lock body scroll and close on Escape.
   useEffect(() => {

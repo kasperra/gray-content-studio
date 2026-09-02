@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { FAQS } from "@/content/site";
 
@@ -21,7 +22,7 @@ export function FaqList() {
         className="w-full font-body text-base text-ink bg-surface border border-rule rounded px-5 py-3.5 mb-10 focus:outline-none focus:border-accent transition-colors"
       />
       {visible.length === 0 && (
-        <p className="text-muted">No matches — try a different word, or <a href="/#contact" className="text-accent hover:underline">ask us directly</a>.</p>
+        <p className="text-muted">No matches — try a different word, or <Link href="/#contact" className="text-accent hover:underline">ask us directly</Link>.</p>
       )}
       <div className="space-y-4">
         {visible.map((f) => (

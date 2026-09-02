@@ -56,8 +56,11 @@ export function ReviewRoom({
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [videoError, setVideoError] = useState("");
+  const [playback, setPlayback] = useState<{
+    versionId: string;
+    url: string | null;
+    error: string;
+  } | null>(null);
   const [draft, setDraft] = useState("");
   const [atTime, setAtTime] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
@@ -66,20 +69,34 @@ export function ReviewRoom({
 
   const active = versions.find((x) => x.id === activeVersionId) ?? null;
 
+  // Playback is tagged with the version it was signed for, so switching versions
+  // drops the previous URL by derivation. Resetting it with a setState at the top
+  // of the effect below would let the old video paint once under the new version.
+  const shown = playback && playback.versionId === active?.id ? playback : null;
+  const videoUrl = shown?.url ?? null;
+  const videoError = shown?.error ?? "";
+
   // Signed playback URL (4h) — generated with the viewer's own session, so RLS applies
   useEffect(() => {
-    let cancelled = false;
-    setVideoUrl(null);
-    setVideoError("");
     if (!active) return;
+    let cancelled = false;
+    const versionId = active.id;
+    const storagePath = active.storagePath;
     (async () => {
       const supabase = createSupabaseBrowser();
       const { data, error } = await supabase.storage
         .from("deliverables")
-        .createSignedUrl(active.storagePath, 60 * 60 * 4);
+        .createSignedUrl(storagePath, 60 * 60 * 4);
       if (cancelled) return;
-      if (error || !data) setVideoError("Could not load the video — please refresh or contact the studio.");
-      else setVideoUrl(data.signedUrl);
+      setPlayback(
+        error || !data
+          ? {
+              versionId,
+              url: null,
+              error: "Could not load the video — please refresh or contact the studio.",
+            }
+          : { versionId, url: data.signedUrl, error: "" }
+      );
     })();
     return () => {
       cancelled = true;

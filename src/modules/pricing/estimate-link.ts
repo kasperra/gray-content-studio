@@ -20,6 +20,7 @@ export function saveDraft(draft: EstimateDraft): void {
   } catch {
     /* storage unavailable — the form simply won't show the attachment */
   }
+  emitDraftChange();
 }
 
 export function loadDraft(): EstimateDraft | null {
@@ -38,6 +39,59 @@ export function clearDraft(): void {
   } catch {
     /* ignore */
   }
+  emitDraftChange();
+}
+
+/* ---------- useSyncExternalStore adapter ----------
+
+   sessionStorage is an external store, so the contact form subscribes to it
+   rather than copying it into state from an effect: the server render and the
+   hydration pass both see null (no mismatch), and the value appears on the
+   client without a second render pass we have to write by hand.
+
+   These module-level values are only ever touched by the browser helpers
+   above — server code in this file (parseDraft, estimateFromDraft) doesn't
+   reach them. */
+
+const draftListeners = new Set<() => void>();
+
+function emitDraftChange(): void {
+  draftListeners.forEach((fn) => fn());
+}
+
+export function subscribeToDraft(onChange: () => void): () => void {
+  draftListeners.add(onChange);
+  // Another tab writing the same key fires `storage`, never our own writes.
+  window.addEventListener("storage", onChange);
+  return () => {
+    draftListeners.delete(onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+// getSnapshot must be referentially stable between reads or React re-renders
+// forever, so the parsed draft is memoized against the raw string it came from.
+let snapshotRaw: string | null = null;
+let snapshotDraft: EstimateDraft | null = null;
+
+export function getDraftSnapshot(): EstimateDraft | null {
+  let raw: string | null = null;
+  try {
+    raw = sessionStorage.getItem(STORAGE_KEY);
+  } catch {
+    raw = null;
+  }
+  if (raw !== snapshotRaw) {
+    snapshotRaw = raw;
+    snapshotDraft = raw ? parseDraft(raw) : null;
+  }
+  return snapshotDraft;
+}
+
+/** Server and hydration snapshot — always empty, since sessionStorage is
+    browser-only. Must be a stable reference, so it is a plain null. */
+export function getDraftServerSnapshot(): EstimateDraft | null {
+  return null;
 }
 
 /* ---------- Validation (used server-side on untrusted input too) ---------- */

@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useSyncExternalStore } from "react";
 import { submitLead, type LeadFormState } from "@/modules/leads/actions";
 import {
-  loadDraft,
   clearDraft,
   estimateFromDraft,
-  type EstimateDraft,
+  getDraftSnapshot,
+  getDraftServerSnapshot,
+  subscribeToDraft,
 } from "@/modules/pricing/estimate-link";
 import { money } from "@/modules/pricing/data";
 
@@ -16,19 +17,16 @@ const labelCls = "text-[0.78rem] font-medium uppercase tracking-[0.14em] text-mu
 
 export function ContactForm() {
   const [state, formAction, pending] = useActionState<LeadFormState, FormData>(submitLead, null);
-  const [draft, setDraft] = useState<EstimateDraft | null>(null);
 
-  // Pick up an estimate handed off from the pricing calculator
-  useEffect(() => {
-    setDraft(loadDraft());
-  }, []);
+  // The estimate handed off from the pricing calculator lives in sessionStorage.
+  // Reading it as an external store keeps the server and hydration renders empty
+  // and re-renders on its own whenever clearDraft() runs, here or elsewhere.
+  const draft = useSyncExternalStore(subscribeToDraft, getDraftSnapshot, getDraftServerSnapshot);
 
-  // Clear the stored draft once the inquiry goes through
+  // Drop the stored draft once the inquiry goes through, so a second visit to
+  // the form doesn't re-attach an estimate that was already sent.
   useEffect(() => {
-    if (state?.ok) {
-      clearDraft();
-      setDraft(null);
-    }
+    if (state?.ok) clearDraft();
   }, [state]);
 
   const estimate = draft ? estimateFromDraft(draft) : null;
@@ -54,10 +52,7 @@ export function ContactForm() {
           </p>
           <button
             type="button"
-            onClick={() => {
-              clearDraft();
-              setDraft(null);
-            }}
+            onClick={() => clearDraft()}
             aria-label="Remove attached estimate"
             className="shrink-0 rounded-full border border-rule w-8 h-8 text-muted hover:text-[#d98a7a] hover:border-[#d98a7a] transition-colors cursor-pointer"
           >

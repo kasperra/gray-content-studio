@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { WorkGrid } from "./WorkGrid";
 import { Container } from "@/components/sections";
-import { Eyebrow } from "@/components/Buttons";
+import { ButtonGold, Eyebrow } from "@/components/Buttons";
 import Image from "next/image";
 
 export const metadata: Metadata = {
@@ -49,12 +49,9 @@ export default function WorkPage() {
           <h2 className="font-display font-semibold text-[clamp(2.2rem,5vw,3.8rem)] mt-2">
             Have a story to tell?
           </h2>
-          <a
-            href="/#contact"
-            className="inline-block mt-10 rounded-full bg-accent text-bg border border-accent font-semibold uppercase text-[0.88rem] tracking-[0.08em] px-[1.9em] py-[0.78em] transition-all duration-200 hover:bg-transparent hover:text-accent hover:-translate-y-0.5"
-          >
+          <ButtonGold href="/#contact" className="mt-10">
             Start a Project
-          </a>
+          </ButtonGold>
         </Container>
       </section>
     </>

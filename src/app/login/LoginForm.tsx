@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowser } from "@/lib/supabase/client";
@@ -38,9 +39,9 @@ export function LoginForm() {
           The client portal backend (Supabase) hasn&apos;t been configured for this deployment.
           Once the project keys are added, login will activate automatically.
         </p>
-        <a href="/" className="inline-block mt-6 text-accent text-[0.9rem] font-semibold hover:underline underline-offset-4">
+        <Link href="/" className="inline-block mt-6 text-accent text-[0.9rem] font-semibold hover:underline underline-offset-4">
           ← Back to site
-        </a>
+        </Link>
       </div>
     );
   }
