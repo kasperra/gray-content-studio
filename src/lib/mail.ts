@@ -18,8 +18,12 @@ export function envStr(name: string): string | undefined {
   return clean || undefined;
 }
 
-/** MAIL_FROM_EMAIL is the name to use going forward; DIAGNOSTIC_FROM_EMAIL is
-    what's already set in Vercel and keeps working. */
+/** The default sender. MAIL_FROM_EMAIL is the name to use going forward;
+    DIAGNOSTIC_FROM_EMAIL is what's already set in Vercel and keeps working.
+
+    A feature that should send under its own identity passes `from` to sendMail
+    rather than changing this — every caller shares it, so moving it moves the
+    diagnostic and the offer coupon too. */
 export function mailFrom(): string | undefined {
   return envStr("MAIL_FROM_EMAIL") ?? envStr("DIAGNOSTIC_FROM_EMAIL");
 }
@@ -28,10 +32,18 @@ export type MailMessage = { subject: string; html: string; text: string };
 
 /** Returns false (never throws) when unconfigured or failing — a delivery
     problem must never cost us the lead that triggered it. `tag` only labels the
-    server log so a failure can be traced to the feature that sent it. */
-export async function sendMail(to: string, message: MailMessage, tag: string): Promise<boolean> {
+    server log so a failure can be traced to the feature that sent it.
+
+    `from` overrides the default sender for this one message. It must be on a
+    domain verified in Resend or delivery fails, so callers pass an env-provided
+    value and fall back to mailFrom() rather than hardcoding an address. */
+export async function sendMail(
+  to: string,
+  message: MailMessage,
+  tag: string,
+  from: string | undefined = mailFrom()
+): Promise<boolean> {
   const key = envStr("RESEND_API_KEY");
-  const from = mailFrom();
   if (!key || !from) return false;
 
   try {

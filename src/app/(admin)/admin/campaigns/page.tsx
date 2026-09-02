@@ -1,5 +1,5 @@
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { getCampaigns, deleteCampaignInquiry } from "@/modules/campaigns/actions";
+import { getCampaigns, deleteCampaignInquiry, getMailRouting } from "@/modules/campaigns/actions";
 import { checkMailer } from "@/modules/diagnostic/email";
 import { formatDate, sessionTypeLabel } from "@/modules/campaigns/campaign";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
@@ -39,7 +39,7 @@ const short = (iso: string) =>
 
 export default async function AdminCampaignsPage() {
   const supabase = await createSupabaseServer();
-  const [{ data, error }, campaigns, mailer] = await Promise.all([
+  const [{ data, error }, campaigns, mailer, routing] = await Promise.all([
     supabase
       .from("campaign_inquiries")
       .select("*")
@@ -47,6 +47,7 @@ export default async function AdminCampaignsPage() {
       .limit(500),
     getCampaigns(),
     checkMailer(),
+    getMailRouting(),
   ]);
 
   // The migration is applied by hand, so explain rather than error.
@@ -90,16 +91,39 @@ export default async function AdminCampaignsPage() {
         , and sends a confirmation to the customer plus a copy to the studio.
       </p>
 
-      {!mailer.keySet || !mailer.fromSet ? (
+      {!mailer.keySet || !routing.from ? (
         <div className="rounded-lg border border-rule bg-surface p-5 mb-8 max-w-[68ch]">
           <p className="text-[0.92rem]">
             <span className="font-semibold">Email isn&apos;t configured.</span> Requests are still
             saved and still reach the CRM, but neither the customer confirmation nor the studio
             notification is sent. Set <code className="text-accent">RESEND_API_KEY</code> and{" "}
-            <code className="text-accent">MAIL_FROM_EMAIL</code> in Vercel, then redeploy.
+            <code className="text-accent">CAMPAIGN_FROM_EMAIL</code> in Vercel, then redeploy.
           </p>
         </div>
-      ) : null}
+      ) : (
+        /* Both addresses resolve through fallbacks, so the dashboard doesn't
+           show what a deployment will actually do — this does. */
+        <div className="rounded-lg border border-rule bg-surface p-5 mb-8 max-w-[68ch]">
+          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-muted">
+            Mail routing
+          </p>
+          <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-2 mt-3 text-[0.88rem]">
+            <div className="flex gap-2">
+              <dt className="text-muted shrink-0">Sends from</dt>
+              <dd className="break-all">{routing.from}</dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="text-muted shrink-0">Studio copy to</dt>
+              <dd className="break-all">{routing.to}</dd>
+            </div>
+          </dl>
+          <p className="text-muted text-[0.78rem] mt-3 leading-relaxed">
+            Set with <code className="text-accent">CAMPAIGN_FROM_EMAIL</code> and{" "}
+            <code className="text-accent">CAMPAIGN_NOTIFY_EMAIL</code>. Campaign mail sends under
+            its own address so it doesn&apos;t inherit the diagnostic&apos;s sender.
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-10">
         <Stat label="Requests" value={inquiries.length} />

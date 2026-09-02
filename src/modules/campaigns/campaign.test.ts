@@ -20,6 +20,7 @@ import {
   EDITABLE_FIELDS,
 } from "./campaign";
 import { CAMPAIGNS, campaignBySlug } from "./campaigns";
+import { campaignFrom } from "./email";
 
 const fall = campaignBySlug("fall-mini-sessions");
 assert.ok(fall, "the fall campaign should exist");
@@ -161,5 +162,51 @@ assert.deepEqual(long.errors, {});
 // Session types resolve to their visitor-facing label for emails and the CRM.
 assert.equal(sessionTypeLabel(fall, "kids"), "Kids");
 assert.equal(sessionTypeLabel(fall, "unknown"), "unknown");
+
+/* ------------------------------------------------------------ mail sender -- */
+
+/* The campaign pages shipped sending as diagnostic@, because the shared
+   mailFrom() falls back to DIAGNOSTIC_FROM_EMAIL and nothing overrode it.
+   These pin the resolution order so that can't recur silently. */
+{
+  const saved = {
+    campaign: process.env.CAMPAIGN_FROM_EMAIL,
+    mail: process.env.MAIL_FROM_EMAIL,
+    diagnostic: process.env.DIAGNOSTIC_FROM_EMAIL,
+  };
+  const setEnv = (k: string, v: string | undefined) => {
+    if (v === undefined) delete process.env[k];
+    else process.env[k] = v;
+  };
+
+  try {
+    // Its own address wins over both shared senders.
+    setEnv("CAMPAIGN_FROM_EMAIL", "hello@studio.test");
+    setEnv("MAIL_FROM_EMAIL", "shared@studio.test");
+    setEnv("DIAGNOSTIC_FROM_EMAIL", "diagnostic@studio.test");
+    assert.equal(campaignFrom(), "hello@studio.test");
+
+    // Unset, it falls back rather than failing to send at all.
+    setEnv("CAMPAIGN_FROM_EMAIL", undefined);
+    assert.equal(campaignFrom(), "shared@studio.test");
+    setEnv("MAIL_FROM_EMAIL", undefined);
+    assert.equal(campaignFrom(), "diagnostic@studio.test");
+
+    // Nothing configured at all: undefined, so sendMail no-ops instead of
+    // posting a message with an empty From that Resend would reject.
+    setEnv("DIAGNOSTIC_FROM_EMAIL", undefined);
+    assert.equal(campaignFrom(), undefined);
+
+    // A value pasted into a dashboard with quotes or a trailing newline still
+    // resolves — that shape of typo produces a confusing 401, not a clear error.
+    setEnv("CAMPAIGN_FROM_EMAIL", '"hello@studio.test"\n');
+    assert.equal(campaignFrom(), "hello@studio.test");
+  } finally {
+    setEnv("CAMPAIGN_FROM_EMAIL", saved.campaign);
+    setEnv("MAIL_FROM_EMAIL", saved.mail);
+    setEnv("DIAGNOSTIC_FROM_EMAIL", saved.diagnostic);
+  }
+  console.log("sender: campaign address wins, falls back cleanly, tolerates pasted quotes ✓");
+}
 
 console.log("\ncampaigns: all checks passed");

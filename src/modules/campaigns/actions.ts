@@ -6,7 +6,13 @@ import { createSupabaseAdmin, supabaseConfigured } from "@/lib/supabase/server";
 import { LEGAL } from "@/content/legal";
 import { envStr } from "@/lib/mail";
 import { campaignBySlug, CAMPAIGNS } from "./campaigns";
-import { renderCustomerEmail, renderStudioEmail, sendCustomerEmail, sendStudioEmail } from "./email";
+import {
+  campaignFrom,
+  renderCustomerEmail,
+  renderStudioEmail,
+  sendCustomerEmail,
+  sendStudioEmail,
+} from "./email";
 import {
   applyOverrides,
   formatDate,
@@ -27,17 +33,25 @@ function connected() {
   return supabaseConfigured() && Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
-/** Outbound mail is opt-in on env, so skip the render entirely when it's off. */
+/** Outbound mail is opt-in on env, so skip the render entirely when it's off.
+    Reads campaignFrom() rather than the shared sender directly: a deployment
+    that sets only CAMPAIGN_FROM_EMAIL can still send, and would otherwise be
+    skipped here despite being correctly configured. */
 function mailerReady() {
-  return Boolean(
-    process.env.RESEND_API_KEY && (process.env.MAIL_FROM_EMAIL || process.env.DIAGNOSTIC_FROM_EMAIL)
-  );
+  return Boolean(process.env.RESEND_API_KEY && campaignFrom());
 }
 
 /** Where the studio's copy of an inquiry goes. Falls back to the address the
     legal pages already publish, so this works without new configuration. */
 function studioInbox(): string {
   return envStr("CAMPAIGN_NOTIFY_EMAIL") ?? envStr("DIAGNOSTIC_REPLY_TO") ?? LEGAL.email;
+}
+
+/** What Admin → Campaigns shows about mail routing. Both values resolve through
+    fallbacks, so the only reliable way to know what a deployment will actually
+    do is to ask it — reading the Vercel dashboard doesn't show the fallback. */
+export async function getMailRouting(): Promise<{ from: string | null; to: string }> {
+  return { from: campaignFrom() ?? null, to: studioInbox() };
 }
 
 /** Crude per-IP throttle, same shape as the offer popup's. Resets on cold

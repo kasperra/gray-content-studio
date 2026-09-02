@@ -14,7 +14,7 @@
    subscribing them to anything is not what they did. */
 
 import { LEGAL } from "@/content/legal";
-import { sendMail, type MailMessage } from "@/lib/mail";
+import { envStr, mailFrom, sendMail, type MailMessage } from "@/lib/mail";
 import { SITE_URL } from "@/lib/site";
 import {
   formatDate,
@@ -253,11 +253,23 @@ export function renderStudioEmail(opts: {
   };
 }
 
+/** Who a campaign email comes from.
+
+    These pages are a consumer photography promotion, not the diagnostic, so
+    they send under the studio's own address rather than the diagnostic@ sender
+    the other features share. Falls back to that shared sender when unset, so an
+    install without the variable still delivers — Admin → Campaigns prints the
+    address actually in use, since a wrong-but-working sender is otherwise
+    invisible until someone reads a received message. */
+export function campaignFrom(): string | undefined {
+  return envStr("CAMPAIGN_FROM_EMAIL") ?? mailFrom();
+}
+
 /** Thin wrappers over the shared transport, so the log tag is consistent. */
 export async function sendCustomerEmail(to: string, message: MailMessage): Promise<boolean> {
-  return sendMail(to, message, "campaign");
+  return sendMail(to, message, "campaign", campaignFrom());
 }
 
 export async function sendStudioEmail(to: string, message: MailMessage): Promise<boolean> {
-  return sendMail(to, message, "campaign-studio");
+  return sendMail(to, message, "campaign-studio", campaignFrom());
 }
