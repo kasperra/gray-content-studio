@@ -214,20 +214,30 @@ export async function submitCampaignInquiry(
   }
 
   // 3) Confirm to the customer and notify the studio. Both best-effort.
+  //
+  // Sent concurrently: neither depends on the other, and the visitor is held on
+  // "Sending…" until both return, so running them in series spent a whole
+  // Resend round trip of the submission's latency for nothing.
+  //
+  // Each keeps its own .catch, so Promise.all can't let one failure discard the
+  // other's result — a rejection here would lose the flag for a message that
+  // actually went out. sendMail already swallows its own errors; these are
+  // belt-and-braces.
   if (mailerReady()) {
     const sentAt = new Date().toISOString();
 
-    const customerSent = await sendCustomerEmail(
-      values.email,
-      renderCustomerEmail({ campaign, inquiry: values })
-    ).catch(() => false);
-
-    // Reply-to is the inquirer, so Reply in the studio inbox answers them.
-    const studioSent = await sendStudioEmail(
-      studioInbox(),
-      renderStudioEmail({ campaign, inquiry: values, leadId }),
-      values.email
-    ).catch(() => false);
+    const [customerSent, studioSent] = await Promise.all([
+      sendCustomerEmail(
+        values.email,
+        renderCustomerEmail({ campaign, inquiry: values })
+      ).catch(() => false),
+      // Reply-to is the inquirer, so Reply in the studio inbox answers them.
+      sendStudioEmail(
+        studioInbox(),
+        renderStudioEmail({ campaign, inquiry: values, leadId }),
+        values.email
+      ).catch(() => false),
+    ]);
 
     if (inquiry?.id && (customerSent || studioSent)) {
       // Tolerates the 0006 columns being absent, like the offer popup's
