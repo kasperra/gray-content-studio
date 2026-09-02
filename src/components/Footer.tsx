@@ -1,5 +1,20 @@
 import Link from "next/link";
 import { Wordmark } from "./Nav";
+import { CAMPAIGNS } from "@/modules/campaigns/campaigns";
+
+/* Running seasonal promotions, listed above the anchor links so the real pages
+   stay together.
+
+   Read from the code defaults rather than the config store, which keeps the
+   footer a pure function — it renders on every public page, and most of those
+   are fully static, so a database read here would buy nothing and risk making
+   them dynamic. The tradeoff: switching a season off in Admin → Campaigns 404s
+   the page immediately but leaves this link until the next deploy, so ending a
+   season means setting `published: false` in campaigns.ts too. */
+const campaignLinks = CAMPAIGNS.filter((c) => c.published).map((c) => ({
+  href: `/${c.slug}`,
+  label: c.title,
+}));
 
 const cols = [
   {
@@ -9,6 +24,7 @@ const cols = [
       { href: "/process", label: "Process" },
       { href: "/pricing", label: "Pricing" },
       { href: "/event-coverage", label: "Event Coverage" },
+      ...campaignLinks,
       { href: "/#services", label: "Services" },
     ],
   },

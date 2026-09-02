@@ -73,7 +73,7 @@ export function CampaignEditor({ initial }: { initial: Campaign }) {
         <Field
           label="Published"
           wide
-          help="Off takes the page down — it returns 404 and drops out of search."
+          help="Off takes the page down immediately — it returns 404 and drops out of search. The site footer links to running campaigns from campaigns.ts, so ending a season for good also means setting published: false there."
         >
           <select
             value={String(c.published)}
