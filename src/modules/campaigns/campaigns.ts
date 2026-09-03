@@ -35,17 +35,23 @@ const FALL_MINI_SESSIONS: Campaign = {
   title: "Fall Mini Sessions",
   price: "$150",
   lede:
-    "A short, relaxed outdoor session in the best light of the year — and ten finished photographs you'll actually want to print. Limited spots available this fall.",
+    "A short, relaxed outdoor session in the best light of the year — and up to 25 finished photographs you'll actually want to print. Limited spots available this fall.",
 
   includes: [
     "30-minute session",
-    "10 professionally edited digital photos",
+    "Up to 25 professionally edited digital photos",
     "Outdoor fall location",
     "Perfect for couples, families, portraits & kids",
     "Online gallery for viewing and downloading",
     "Additional images available for purchase",
     "Limited spots available this fall",
     "Dates and locations confirmed upon booking",
+  ],
+
+  highlights: [
+    { label: "Session", value: "30 min" },
+    { label: "Photos", value: "Up to 25" },
+    { label: "Setting", value: "Outdoors" },
   ],
 
   audience: [
@@ -90,7 +96,7 @@ const FALL_MINI_SESSIONS: Campaign = {
     {
       title: "Your gallery",
       detail:
-        "Ten professionally edited photographs arrive in an online gallery for viewing and downloading. Additional images are available for purchase.",
+        "Up to 25 professionally edited photographs arrive in an online gallery for viewing and downloading. Additional images are available for purchase.",
     },
   ],
 
@@ -143,7 +149,7 @@ const FALL_MINI_SESSIONS: Campaign = {
 
   metaTitle: "Fall Mini Sessions — $150",
   metaDescription:
-    "Fall Mini Sessions from Gray Content Studio — $150 for a 30-minute outdoor session and 10 professionally edited digital photos. For couples, families, portraits and kids. Limited spots available this fall.",
+    "Fall Mini Sessions from Gray Content Studio — $150 for a 30-minute outdoor session and up to 25 professionally edited digital photos. For couples, families, portraits and kids. Limited spots available this fall.",
 };
 
 /** Every campaign the app knows about, published or not. */

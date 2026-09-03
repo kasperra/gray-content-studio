@@ -156,23 +156,26 @@ export function CampaignPage({ campaign, minDate }: { campaign: Campaign; minDat
                 </a>
               </div>
 
-              {/* The three facts that decide whether someone reads on. */}
-              <dl className="grid grid-cols-3 gap-4 sm:gap-6 mt-11 border-t border-rule pt-7 max-w-136">
-                {[
-                  { k: "Session", v: "30 min" },
-                  { k: "Photos", v: "10 edited" },
-                  { k: "Setting", v: "Outdoors" },
-                ].map((f) => (
-                  <div key={f.k}>
-                    <dt className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted">
-                      {f.k}
-                    </dt>
-                    <dd className="font-display text-[1.05rem] sm:text-[1.25rem] font-semibold mt-1">
-                      {f.v}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
+              {/* The facts that decide whether someone reads on. */}
+              {campaign.highlights.length > 0 && (
+                <dl
+                  className="grid gap-4 sm:gap-6 mt-11 border-t border-rule pt-7 max-w-136"
+                  style={{
+                    gridTemplateColumns: `repeat(${campaign.highlights.length}, minmax(0, 1fr))`,
+                  }}
+                >
+                  {campaign.highlights.map((f) => (
+                    <div key={f.label}>
+                      <dt className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted">
+                        {f.label}
+                      </dt>
+                      <dd className="font-display text-[1.05rem] sm:text-[1.25rem] font-semibold mt-1">
+                        {f.value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
             </Reveal>
 
             {lead && (

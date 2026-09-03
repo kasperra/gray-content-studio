@@ -38,7 +38,7 @@ assert.equal(fall.emailSubject, "We received your Fall Mini Session request 🍂
 assert.equal(fall.ctaLabel, "Message Me to Book Your Session");
 assert.deepEqual(fall.includes, [
   "30-minute session",
-  "10 professionally edited digital photos",
+  "Up to 25 professionally edited digital photos",
   "Outdoor fall location",
   "Perfect for couples, families, portraits & kids",
   "Online gallery for viewing and downloading",
@@ -51,6 +51,24 @@ assert.deepEqual(
   ["Family", "Couple", "Kids", "Portrait", "Other"]
 );
 console.log("offer: price, CTA, email subject and all 8 inclusions match the brief ✓");
+
+// The hero's fact row used to be hardcoded in CampaignPage, so a change to the
+// offer left the layout advertising the old one. It reads from the campaign
+// now, and the two must not drift apart again.
+{
+  const photos = fall.highlights.find((h) => h.label === "Photos");
+  assert.ok(photos, "the hero should state a photo count");
+  const inclusion = fall.includes.find((i) => /photo/i.test(i));
+  assert.ok(inclusion, "the inclusions should state a photo count");
+  const countOf = (s: string) => s.match(/\d+/)?.[0];
+  assert.equal(
+    countOf(photos.value),
+    countOf(inclusion),
+    "the hero's photo count must match what the inclusions promise"
+  );
+  assert.equal(countOf(photos.value), "25");
+}
+console.log("hero: the fact row is campaign data and agrees with the inclusions ✓");
 
 // Every campaign needs a route-able slug and a theme that actually exists.
 for (const c of CAMPAIGNS) {

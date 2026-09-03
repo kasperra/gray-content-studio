@@ -151,6 +151,11 @@ export type Campaign = {
 
   /** Everything the session includes, verbatim from the offer. */
   includes: string[];
+  /** The two or three facts that decide whether someone reads on, shown as a
+      row under the hero. Kept here rather than in the layout so a season that
+      sells something other than minutes and photo counts isn't stuck with
+      another season's headline facts. */
+  highlights: { label: string; value: string }[];
   /** Who the sessions suit, one card each. */
   audience: { title: string; detail: string }[];
   /** How booking works, in order. */
