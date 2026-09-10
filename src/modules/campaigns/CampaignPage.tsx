@@ -104,6 +104,17 @@ function GallerySlot({
   );
 }
 
+/* The grid holds however many frames a season has. Four or more tile two-up on
+   a phone and four-up on desktop; three go one-up then three-up, so the row
+   fills instead of leaving a hole; two and one stay centred. Written out rather
+   than interpolated because Tailwind only ships classes it can see. */
+function galleryGridCols(count: number): string {
+  if (count >= 4) return "grid-cols-2 lg:grid-cols-4";
+  if (count === 3) return "grid-cols-1 sm:grid-cols-3";
+  if (count === 2) return "grid-cols-1 sm:grid-cols-2";
+  return "grid-cols-1 max-w-100 mx-auto";
+}
+
 export function CampaignPage({ campaign, minDate }: { campaign: Campaign; minDate: string }) {
   const theme = themeById(campaign.themeId);
   // A campaign may ship with no gallery at all; the hero then runs full width
@@ -203,12 +214,16 @@ export function CampaignPage({ campaign, minDate }: { campaign: Campaign; minDat
               </h2>
             </Reveal>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className={`grid ${galleryGridCols(rest.length)} gap-3 sm:gap-4`}>
               {rest.map((img, i) => (
                 <Reveal key={`${img.caption ?? img.alt}-${i}`} delay={0.05 * i}>
                   <GallerySlot
                     image={img}
-                    sizes="(max-width: 640px) 46vw, (max-width: 1024px) 46vw, 23vw"
+                    sizes={
+                      rest.length >= 4
+                        ? "(max-width: 640px) 46vw, (max-width: 1024px) 46vw, 23vw"
+                        : "(max-width: 640px) 92vw, 31vw"
+                    }
                     className="aspect-4/5 w-full"
                   />
                 </Reveal>

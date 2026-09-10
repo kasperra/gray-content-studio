@@ -100,20 +100,38 @@ const FALL_MINI_SESSIONS: Campaign = {
     },
   ],
 
-  /* Slots are intentionally sourceless until the studio's own fall frames
-     exist. Each renders as a composed seasonal panel in the meantime — the
-     layout is complete either way. To fill one: drop the file in
-     /public/img/campaigns/fall-mini-sessions/ and set `src` here. Keep the
-     alt text describing the real photograph once it lands. */
+  /* The studio's own frames. gallery[0] is the hero tile, the rest form the
+     grid below. Files live in /public/img/campaigns/fall-mini-sessions/,
+     re-encoded to ~400KB with their metadata stripped.
+
+     Both landscape frames sit in portrait tiles, which crop to the middle 80%
+     of their width — checked, and every subject stays inside it. Alt text
+     describes what is actually in each photograph, and deliberately names no
+     one: these are real clients, not stock. */
   galleryTitle: "The look",
   galleryLede:
     "Warm, natural, unfussy. Shot outdoors in the season's own light rather than lit to death in a studio.",
   gallery: [
-    { alt: "Fall mini session photograph", caption: "Golden hour, outdoors" },
-    { alt: "Fall mini session photograph", caption: "Families, unposed" },
-    { alt: "Fall mini session photograph", caption: "Couples in autumn colour" },
-    { alt: "Fall mini session photograph", caption: "Kids, between the poses" },
-    { alt: "Fall mini session photograph", caption: "Portraits with a season behind them" },
+    {
+      src: "/img/campaigns/fall-mini-sessions/siblings.jpg",
+      alt: "A young boy sitting on a park lawn holding his baby sister, both laughing, with a tree and a view over the city behind them",
+      caption: "Kids, between the poses",
+    },
+    {
+      src: "/img/campaigns/fall-mini-sessions/family-portrait.jpg",
+      alt: "Two women standing on the grass under a tree, one holding a baby, a small boy in front of them",
+      caption: "Family portraits, outdoors",
+    },
+    {
+      src: "/img/campaigns/fall-mini-sessions/family-of-four.jpg",
+      alt: "A family of four on a park lawn — a boy on his father's shoulders, a baby in his mother's arms",
+      caption: "Families, in real light",
+    },
+    {
+      src: "/img/campaigns/fall-mini-sessions/park-overlook.jpg",
+      alt: "Two men and a small boy standing together on the grass with their backs to the camera, looking out over the city",
+      caption: "Unposed moments",
+    },
   ],
 
   ctaLabel: "Message Me to Book Your Session",
