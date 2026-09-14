@@ -104,23 +104,24 @@ const FALL_MINI_SESSIONS: Campaign = {
      grid below. Files live in /public/img/campaigns/fall-mini-sessions/,
      re-encoded to ~400KB with their metadata stripped.
 
-     Both landscape frames sit in portrait tiles, which crop to the middle 80%
-     of their width — checked, and every subject stays inside it. Alt text
-     describes what is actually in each photograph, and deliberately names no
-     one: these are real clients, not stock. */
+     The landscape frames sit in portrait tiles, which crop to the middle 80%
+     of their width — rendered the actual crops rather than assuming, and every
+     subject stays inside. Alt text describes what is actually in each
+     photograph, and deliberately names no one: these are real clients, not
+     stock. */
   galleryTitle: "The look",
   galleryLede:
     "Warm, natural, unfussy. Shot outdoors in the season's own light rather than lit to death in a studio.",
   gallery: [
     {
-      src: "/img/campaigns/fall-mini-sessions/siblings.jpg",
-      alt: "A young boy sitting on a park lawn holding his baby sister, both laughing, with a tree and a view over the city behind them",
-      caption: "Kids, between the poses",
-    },
-    {
       src: "/img/campaigns/fall-mini-sessions/family-portrait.jpg",
       alt: "Two women standing on the grass under a tree, one holding a baby, a small boy in front of them",
       caption: "Family portraits, outdoors",
+    },
+    {
+      src: "/img/campaigns/fall-mini-sessions/siblings.jpg",
+      alt: "A young boy sitting on a park lawn holding his baby sister, both laughing, with a tree and a view over the city behind them",
+      caption: "Kids, between the poses",
     },
     {
       src: "/img/campaigns/fall-mini-sessions/family-of-four.jpg",
@@ -131,6 +132,11 @@ const FALL_MINI_SESSIONS: Campaign = {
       src: "/img/campaigns/fall-mini-sessions/park-overlook.jpg",
       alt: "Two men and a small boy standing together on the grass with their backs to the camera, looking out over the city",
       caption: "Unposed moments",
+    },
+    {
+      src: "/img/campaigns/fall-mini-sessions/extended-family.jpg",
+      alt: "Four adults with a young boy and a baby, seated together along a low stone wall on a tree-lined street",
+      caption: "Everyone, in one frame",
     },
   ],
 
