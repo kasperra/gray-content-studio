@@ -37,6 +37,9 @@ yarn-error.log*
 # Raw portfolio source videos (1GB) — compressed copies live in public/video/
 /Portfolio Videos/
 
+# raw camera stills (optimized copies live in public/img/campaigns/)
+/Stills/
+
 # raw design sources (processed copies live in public/)
 /lailacentered.png
 /iheartradio.png
