@@ -7,6 +7,8 @@ import { HeroVideo } from "@/components/HeroVideo";
 import { Container, TrustedBy, WorkCard, MeetFounder, SectionHead } from "@/components/sections";
 import { SERVICES, PROCESS_STEPS, INDUSTRIES, PACKAGES, FAQS } from "@/content/site";
 import { CASE_STUDIES } from "@/content/case-studies";
+import { CampaignPromo } from "@/modules/campaigns/CampaignPromo";
+import { getCampaigns } from "@/modules/campaigns/actions";
 
 const ORG_JSONLD = {
   "@context": "https://schema.org",
@@ -39,8 +41,16 @@ const ORG_JSONLD = {
   ],
 };
 
-export default function HomePage() {
+/* The running campaign's price and copy are editable from Admin → Campaigns, so
+   the home page is regenerated periodically rather than pinned at build time.
+   Matches the campaign page's own window — a home page advertising one price
+   while the landing page shows another is worse than either being a few minutes
+   stale. */
+export const revalidate = 300;
+
+export default async function HomePage() {
   const featured = CASE_STUDIES.filter((c) => c.featured).slice(0, 3);
+  const campaigns = await getCampaigns();
 
   return (
     <>
@@ -127,6 +137,9 @@ export default function HomePage() {
           </Reveal>
         </Container>
       </section>
+
+      {/* Seasonal campaign — renders nothing when no season is running */}
+      <CampaignPromo campaign={campaigns.find((c) => c.published) ?? null} />
 
       {/* Featured work */}
       <section className="py-28">
