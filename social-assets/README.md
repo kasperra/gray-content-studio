@@ -15,17 +15,20 @@ Output lands in `social-assets/png/`. Edit the `ASSETS` dict at the bottom of
 
 ## Requirements
 
-**Fonts must be installed locally** or the render silently falls back to DejaVu
-and looks wrong:
+**Chromium** — the script finds a Playwright headless build automatically on
+macOS or Linux, newest first. Override with `CHROME_BIN=/path/to/binary`, or
+install one with `npx playwright install chromium`.
+
+**Fonts are vendored**, not installed system-wide:
 
 ```bash
-mkdir -p ~/.fonts && cd ~/.fonts
-curl -sSL -o Archivo-400.ttf  "$(curl -s 'https://fonts.googleapis.com/css2?family=Archivo:wght@400' | grep -oE 'https://fonts.gstatic.com[^)]*')"
-curl -sSL -o Archivo-800.ttf  "$(curl -s 'https://fonts.googleapis.com/css2?family=Archivo:wght@800' | grep -oE 'https://fonts.gstatic.com[^)]*')"
-curl -sSL -o Hanken-400.ttf   "$(curl -s 'https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400' | grep -oE 'https://fonts.gstatic.com[^)]*')"
-curl -sSL -o Hanken-600.ttf   "$(curl -s 'https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600' | grep -oE 'https://fonts.gstatic.com[^)]*')"
-fc-cache -f
+python3 social-assets/build.py --fonts
 ```
+
+That caches Archivo + Hanken Grotesk (all subsets) into `social-assets/.fonts/`
+and the render references them directly. The cache is gitignored, so run it once
+in a fresh clone. Skipping it prints a warning and the render falls back to a
+system font — it no longer does so silently.
 
 Output is written twice: `png/` (lossless, for anything you edit further) and
 `jpg/` (quality 92, progressive). **Both directories are gitignored** — they are
@@ -67,8 +70,16 @@ wordmark is visible before shipping anything.
 | `yt-brandfilm.png` | 1280×720 | Thumbnail for the brand-film post |
 | `yt-shortform.png` | 1280×720 | Thumbnail for the short-form-strategy post |
 | `fb-credentials.png` | 1200×630 | Facebook / OG card — Fortune 500 credibility play |
+| `post-fall-mini.png` | 1080×1350 | Fall Mini Sessions — the offer and what's included |
+| `post-fall-book.png` | 1080×1350 | Fall Mini Sessions — booking call to action |
+| `post-event-coverage.png` | 1080×1350 | Event coverage — Event Essentials tier |
 | `reel-before.png` | 1080×1920 | Title frame for before/after reels |
 | `reel-after.png` | 1080×1920 | Title frame for before/after reels |
+
+`post-fall-mini` and `post-fall-book` mirror the campaign in
+`src/modules/campaigns/campaigns.ts`, and `post-event-coverage` mirrors
+`EVENT_PACKAGES[0]` in `src/content/site.ts` — both are prices on a public
+page, so change them here when those change.
 
 Carousel slides 2 and 4 mirror the `SOCIAL_LAYER` preset in
 `src/modules/pricing/bundles.ts` (4 reels) and the Social Starter floor

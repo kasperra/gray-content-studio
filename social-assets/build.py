@@ -10,15 +10,58 @@ Requires Chromium (already at /opt/pw-browsers/chromium) and the Archivo +
 Hanken Grotesk fonts installed locally (see README in this folder).
 """
 
+# Annotations stay lazy so `Path | None` parses on macOS's system Python 3.9,
+# which is what `python3` resolves to there. Without it the script dies at
+# import with a TypeError that says nothing about versions.
+from __future__ import annotations
+
 import subprocess
 import shutil
 from pathlib import Path
 
-OUT = Path(__file__).parent / "png"
-JPG = Path(__file__).parent / "jpg"
-TMP = Path(__file__).parent / ".html"
-CHROME = "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell"
-FFMPEG = "/opt/pw-browsers/ffmpeg-1011/ffmpeg-linux"
+HERE = Path(__file__).parent
+OUT = HERE / "png"
+JPG = HERE / "jpg"
+TMP = HERE / ".html"
+FONTS = HERE / ".fonts"
+
+
+def find_chrome() -> str:
+    """Locate a headless Chromium.
+
+    The hardcoded Linux path this used to carry meant the script only ran on the
+    box it was written on; everywhere else it produced no output and a wall of
+    empty stderr. Checks CHROME_BIN first, then the Playwright caches on Linux
+    and macOS, newest build first.
+    """
+    import os, glob
+    if os.environ.get("CHROME_BIN"):
+        return os.environ["CHROME_BIN"]
+    # The binary's name and its parent directory both vary by platform and
+    # build: headless_shell on Linux, chrome-headless-shell on macOS.
+    caches = [
+        "/opt/pw-browsers",
+        str(Path.home() / "Library/Caches/ms-playwright"),
+        str(Path.home() / ".cache/ms-playwright"),
+    ]
+    leaves = [
+        "chromium_headless_shell-*/chrome-headless-shell-*/chrome-headless-shell",
+        "chromium_headless_shell-*/chrome-linux/headless_shell",
+        "chromium-*/chrome-linux/chrome",
+        "chromium-*/chrome-mac*/Chromium.app/Contents/MacOS/Chromium",
+    ]
+    patterns = [f"{c}/{l}" for c in caches for l in leaves]
+    for pat in patterns:
+        hits = sorted(glob.glob(pat), reverse=True)
+        if hits:
+            return hits[0]
+    raise SystemExit(
+        "No headless Chromium found. Install one with `npx playwright install "
+        "chromium`, or point CHROME_BIN at a binary."
+    )
+
+
+CHROME = find_chrome()
 
 # --- tokens: mirror of src/app/globals.css @theme -------------------------
 BG = "#0b0b0c"
@@ -29,7 +72,26 @@ ACCENT = "#fac748"       # Tuscan Sun
 MAHOGANY = "#301509"     # Rich Mahogany
 RULE = "rgba(245,242,236,0.12)"
 
+def font_css() -> str:
+    """Local @font-face declarations, or "" when the cache is missing.
+
+    The README used to ask you to install Archivo and Hanken Grotesk as system
+    fonts, and warned that a render silently falls back to DejaVu and "looks
+    wrong" otherwise — a footgun that costs you a whole batch before you notice.
+    Vendoring them next to the script removes the manual step and the failure
+    mode. `python3 social-assets/build.py --fonts` refreshes the cache.
+    """
+    css = FONTS / "fonts.css"
+    if not css.exists():
+        print("  ! no font cache — run: python3 social-assets/build.py --fonts")
+        return ""
+    # Paths inside the css are relative to the cache dir, so the page has to
+    # resolve from there; the HTML is written elsewhere, hence the absolute base.
+    return css.read_text().replace("url(", f"url({FONTS.resolve().as_uri()}/")
+
+
 BASE = f"""
+  {font_css()}
   * {{ margin:0; padding:0; box-sizing:border-box; }}
   html,body {{ background:{BG}; color:{INK};
     font-family:'Hanken Grotesk',sans-serif; -webkit-font-smoothing:antialiased; }}
@@ -247,6 +309,63 @@ def reel_frame(label, headline, sub, w=1080, h=1920):
     """)
 
 
+def offer_post(eyebrow, headline, price, price_label, bullets, footer=None,
+               w=IG_W, h=IG_H):
+    """Standalone 4:5 offer post, 1080x1350.
+
+    carousel_slide would do most of this, but it always stamps an "n / total"
+    counter in the footer, which is a lie on a single post. Same header/body/
+    footer grid so the two formats sit together in a grid view.
+    """
+    items = "".join(f'<li>{b}</li>' for b in bullets)
+    price_html = (
+        f'<div class="pricewrap"><span class="price display accent">{price}</span>'
+        f'<span class="pricelab muted">{price_label}</span></div>'
+        if price else ""
+    )
+    hsize = 92 if len(headline) < 26 else (78 if len(headline) < 38 else 66)
+    return page(w, h, f"""
+      .grid {{ height:100%; padding:96px; display:grid;
+        grid-template-rows:auto 1fr auto; }}
+      .eyebrow {{ font-size:24px; letter-spacing:.22em; }}
+      .body {{ display:flex; flex-direction:column; justify-content:center;
+        min-height:0; }}
+      .headline {{ font-size:{hsize}px; max-width:14ch; }}
+      /* the display face has a .94 line-height, so a small margin here reads as
+         a collision with the headline's descenders */
+      .pricewrap {{ display:flex; align-items:baseline; gap:22px; margin-top:58px; }}
+      .price {{ font-size:150px; line-height:.8; }}
+      .pricelab {{ font-size:30px; }}
+      ul {{ list-style:none; margin-top:44px; }}
+      li {{ font-size:31px; line-height:1.34; color:{INK}; padding-left:44px;
+        position:relative; margin-bottom:22px; }}
+      /* the dot is the page's accent, sized off the cap height of the row */
+      li::before {{ content:''; position:absolute; left:6px; top:.55em;
+        width:13px; height:13px; border-radius:50%; background:{ACCENT}; }}
+      .foot {{ display:flex; justify-content:space-between; align-items:center; }}
+      .rule {{ margin-bottom:30px; }}
+      .wordmark {{ font-size:19px; }}
+      .cta {{ font-family:'Archivo',sans-serif; font-weight:700; font-size:19px;
+        color:{ACCENT}; letter-spacing:.12em; text-transform:uppercase; }}
+    """, f"""
+      <div class="grid">
+        <div class="eyebrow">{eyebrow}</div>
+        <div class="body">
+          <h1 class="headline display">{headline}</h1>
+          {price_html}
+          <ul>{items}</ul>
+        </div>
+        <div>
+          <div class="rule"></div>
+          <div class="foot">
+            <span class="wordmark">graycontentstudio.co</span>
+            <span class="cta">{footer or "Link in bio"}</span>
+          </div>
+        </div>
+      </div>
+    """)
+
+
 # --- the batch ------------------------------------------------------------
 ASSETS = {
     # Instagram carousel: sells the SOCIAL_LAYER bundle
@@ -311,6 +430,37 @@ ASSETS = {
     "post-after": (1080, 1350, reel_frame(
         "AFTER", "Same location. Same day.",
         "Lit, graded, and cut for the platform.", h=1350)),
+
+    # --- Seasonal campaign ------------------------------------------------
+    # Every line mirrors src/modules/campaigns/campaigns.ts. Nothing about
+    # dates, locations or spot counts is stated beyond what the offer commits
+    # to — the page says those are confirmed on booking, so this does too.
+    "post-fall-mini": (IG_W, IG_H, offer_post(
+        "\U0001F342 Fall Photo Special \U0001F4F8",
+        "Fall Mini Sessions",
+        "$150", "per session",
+        ["30-minute session",
+         "Up to 25 edited digital photos",
+         "Outdoor fall location",
+         "Couples, families, portraits &amp; kids"],
+        footer="Limited spots")),
+
+    "post-fall-book": (IG_W, IG_H, reel_frame(
+        "BOOKING NOW", "Limited spots available this fall.",
+        "Message us to book — we'll confirm the date, location, and details.",
+        h=IG_H)),
+
+    # --- Evergreen --------------------------------------------------------
+    # Mirrors EVENT_PACKAGES[0] in src/content/site.ts.
+    "post-event-coverage": (IG_W, IG_H, offer_post(
+        "Event coverage",
+        "Your event, documented properly.",
+        "$450", "starting at",
+        ["Up to 2 hours of coverage",
+         "40+ professionally edited photographs",
+         "Guest candids and key moments",
+         "Online gallery in 5\u20137 business days"],
+        footer="Book a date")),
 }
 
 
@@ -333,7 +483,38 @@ def to_jpeg(png: Path) -> Path | None:
     return jpg if jpg.exists() and jpg.stat().st_size > 1000 else None
 
 
+def fetch_fonts():
+    """Vendor Archivo + Hanken Grotesk next to the script, subsets and all."""
+    import re, urllib.request
+    UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+          "(KHTML, like Gecko) Chrome/120.0 Safari/537.36")
+    url = ("https://fonts.googleapis.com/css2?family=Archivo:wght@400;700;800"
+           "&family=Hanken+Grotesk:wght@400;600&display=swap")
+    FONTS.mkdir(parents=True, exist_ok=True)
+    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    css = urllib.request.urlopen(req, timeout=60).read().decode()
+    seen = {}
+
+    def localize(m):
+        u = m.group(1)
+        if u not in seen:
+            seen[u] = f"f{len(seen)}.woff2"
+            data = urllib.request.urlopen(
+                urllib.request.Request(u, headers={"User-Agent": UA}), timeout=60
+            ).read()
+            (FONTS / seen[u]).write_bytes(data)
+        return f"url({seen[u]})"
+
+    css = re.sub(r"url\((https://fonts\.gstatic\.com[^)]+)\)", localize, css)
+    (FONTS / "fonts.css").write_text(css)
+    print(f"fonts cached: {len(seen)} files in {FONTS}")
+
+
 def main():
+    import sys
+    if "--fonts" in sys.argv:
+        fetch_fonts()
+        return
     OUT.mkdir(parents=True, exist_ok=True)
     JPG.mkdir(parents=True, exist_ok=True)
     TMP.mkdir(parents=True, exist_ok=True)

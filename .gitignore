@@ -55,3 +55,5 @@ __pycache__/
 # (public/img/social/ stays tracked: Vercel serves those for Meta to fetch)
 /social-assets/png/
 /social-assets/jpg/
+# vendored webfonts for the renderer — refetch with build.py --fonts
+/social-assets/.fonts/
