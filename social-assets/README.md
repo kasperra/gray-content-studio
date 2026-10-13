@@ -70,11 +70,19 @@ wordmark is visible before shipping anything.
 | `yt-brandfilm.png` | 1280×720 | Thumbnail for the brand-film post |
 | `yt-shortform.png` | 1280×720 | Thumbnail for the short-form-strategy post |
 | `fb-credentials.png` | 1200×630 | Facebook / OG card — Fortune 500 credibility play |
+| `ad-fall-1x1.png` | 1080×1080 | Paid FB/IG ad — square |
+| `ad-fall-4x5.png` | 1080×1350 | Paid FB/IG ad — 4:5, most feed real estate |
 | `post-fall-mini.png` | 1080×1350 | Fall Mini Sessions — the offer and what's included |
 | `post-fall-book.png` | 1080×1350 | Fall Mini Sessions — booking call to action |
 | `post-event-coverage.png` | 1080×1350 | Event coverage — Event Essentials tier |
 | `reel-before.png` | 1080×1920 | Title frame for before/after reels |
 | `reel-after.png` | 1080×1920 | Title frame for before/after reels |
+
+The `ad-fall-*` creatives read price, title and the spec row out of
+`campaigns.ts` at build time rather than repeating them, so a paid ad can't
+drift from the page it points at — re-run the build after changing the offer.
+They are 1:1 and 4:5 only: the 1.91:1 link-ad ratio takes the least vertical
+space in feed and loses 71% of its width when a placement crops to 9:16.
 
 `post-fall-mini` and `post-fall-book` mirror the campaign in
 `src/modules/campaigns/campaigns.ts`, and `post-event-coverage` mirrors

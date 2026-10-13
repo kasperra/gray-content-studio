@@ -309,6 +309,129 @@ def reel_frame(label, headline, sub, w=1080, h=1920):
     """)
 
 
+def campaign_facts(slug="fall-mini-sessions"):
+    """Read the live campaign's price, title and highlights out of
+    src/modules/campaigns/campaigns.ts.
+
+    Parsed rather than retyped so an ad can't quietly drift from the page it
+    sends people to — the price on a paid creative disagreeing with the landing
+    page is the one error here that costs money. Raises instead of guessing: a
+    silently stale price would be worse than a failed build.
+    """
+    import re
+    src = (HERE.parent / "src/modules/campaigns/campaigns.ts").read_text()
+    block = re.search(
+        r'slug:\s*"%s".*?(?=\n};)' % re.escape(slug), src, re.S
+    )
+    if not block:
+        raise SystemExit(f"campaign {slug!r} not found in campaigns.ts")
+    b = block.group(0)
+
+    def field(name):
+        m = re.search(r'\n  %s:\s*"([^"]+)"' % name, b)
+        if not m:
+            raise SystemExit(f"campaign {slug!r}: no {name}")
+        return m.group(1)
+
+    hl = re.search(r"highlights:\s*\[(.*?)\]", b, re.S)
+    highlights = re.findall(
+        r'\{\s*label:\s*"([^"]+)",\s*value:\s*"([^"]+)"\s*\}', hl.group(1) if hl else ""
+    )
+    if not highlights:
+        raise SystemExit(f"campaign {slug!r}: no highlights")
+
+    return {
+        "title": field("title"),
+        "price": field("price"),
+        "highlights": highlights,
+    }
+
+
+def photo_ad(photo, eyebrow, title, price, highlights, scarcity, url, w, h,
+             focal="center"):
+    """Photo-led paid creative, square or 4:5.
+
+    Split rather than full-bleed-with-scrim. The first attempt ran the type over
+    the photograph and it landed across a father's chest in the square and over
+    a baby in the 4:5 — these frames put their subjects dead centre, so any
+    bottom-anchored type block collides with a person. A scrim deep enough to
+    fix that would have buried the faces it was there to show.
+
+    So: photograph on top, untouched, and a solid brand panel beneath carrying
+    every word. Nothing overlaps a face, contrast is a constant rather than a
+    function of whatever is behind the text, and the panel is the same near-black
+    the landing page opens on.
+    """
+    cells = "".join(
+        f'<div class="spec"><div class="speclab">{l}</div>'
+        f'<div class="specval">{v}</div></div>'
+        for l, v in highlights
+    )
+    # The 4:5 has 270px more height at the same width; all of it goes to the
+    # photograph, which is the thing being sold.
+    photo_h = 856 if h > w else 586
+    return page(w, h, f"""
+      .frame {{ background:{BG}; }}
+      .shot {{ position:relative; height:{photo_h}px; width:100%;
+        background:{BG} url('{photo}') {focal}/cover no-repeat; }}
+      /* Only enough darkening at the very top to hold the wordmark; the
+         photograph is otherwise untouched. */
+      .shot::after {{ content:''; position:absolute; inset:0 0 auto 0; height:210px;
+        background:linear-gradient(to bottom, rgba(11,11,12,.82), rgba(11,11,12,.34) 62%,
+          transparent); }}
+      .top {{ position:absolute; top:52px; left:64px; right:64px; z-index:2;
+        display:flex; justify-content:space-between; align-items:baseline; gap:24px; }}
+      .wordmark {{ font-size:21px; opacity:1; }}
+      .place {{ font-family:'Hanken Grotesk',sans-serif; font-size:19px;
+        letter-spacing:.2em; text-transform:uppercase; color:{INK}; opacity:.95; }}
+      .panel {{ height:calc(100% - {photo_h}px); padding:46px 64px 52px 64px;
+        display:flex; flex-direction:column; justify-content:center; }}
+      .eyebrow {{ font-size:23px; letter-spacing:.22em; }}
+      /* One line by design — wrapping it pushes the spec row off the panel. */
+      .headline {{ font-size:76px; margin-top:12px; white-space:nowrap; }}
+      .pricerow {{ display:flex; align-items:baseline; gap:18px; margin-top:20px; }}
+      .price {{ font-family:'Archivo',sans-serif; font-weight:800;
+        letter-spacing:-.03em; font-size:86px; line-height:.9; color:{ACCENT}; }}
+      .pricelab {{ font-size:27px; color:{INK}; opacity:.82; }}
+      .specs {{ display:flex; gap:54px; margin-top:28px;
+        border-top:1px solid rgba(245,242,236,.20); padding-top:22px; }}
+      .speclab {{ font-family:'Hanken Grotesk',sans-serif; font-size:18px;
+        letter-spacing:.18em; text-transform:uppercase; color:{MUTED}; }}
+      /* Sized to survive the ~3x downscale of a phone feed — these are the
+         differentiators and they were the first thing to go unreadable. */
+      .specval {{ font-family:'Archivo',sans-serif; font-weight:700;
+        font-size:38px; letter-spacing:-.01em; margin-top:5px; color:{INK}; }}
+      .foot {{ display:flex; justify-content:space-between; align-items:center;
+        gap:24px; margin-top:26px; border-top:1px solid rgba(245,242,236,.20);
+        padding-top:22px; }}
+      .scarcity {{ font-family:'Archivo',sans-serif; font-weight:700;
+        font-size:22px; letter-spacing:.06em; text-transform:uppercase;
+        color:{ACCENT}; }}
+      .url {{ font-family:'Hanken Grotesk',sans-serif; font-size:21px;
+        color:{INK}; opacity:.86; }}
+    """, f"""
+      <div class="shot">
+        <div class="top">
+          <span class="wordmark">Gray&middot;Content&middot;Studio</span>
+          <span class="place">Richmond, VA</span>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="eyebrow">{eyebrow}</div>
+        <h1 class="headline display">{title}</h1>
+        <div class="pricerow">
+          <span class="price">{price}</span>
+          <span class="pricelab">per session</span>
+        </div>
+        <div class="specs">{cells}</div>
+        <div class="foot">
+          <span class="scarcity">{scarcity}</span>
+          <span class="url">{url}</span>
+        </div>
+      </div>
+    """)
+
+
 def offer_post(eyebrow, headline, price, price_label, bullets, footer=None,
                w=IG_W, h=IG_H):
     """Standalone 4:5 offer post, 1080x1350.
@@ -367,6 +490,12 @@ def offer_post(eyebrow, headline, price, price_label, bullets, footer=None,
 
 
 # --- the batch ------------------------------------------------------------
+
+# file:// so the headless render can read them off disk; these are the same
+# frames the landing page ships.
+PHOTO_DIR = (HERE.parent / "public/img/campaigns/fall-mini-sessions").resolve().as_uri() + "/"
+_FALL = campaign_facts("fall-mini-sessions")
+
 ASSETS = {
     # Instagram carousel: sells the SOCIAL_LAYER bundle
     "ig-carousel-1": (IG_W, IG_H, carousel_slide(
@@ -452,6 +581,31 @@ ASSETS = {
 
     # --- Evergreen --------------------------------------------------------
     # Mirrors EVENT_PACKAGES[0] in src/content/site.ts.
+    # --- Paid: Facebook / Instagram ad creative ---------------------------
+    # 1:1 and 4:5 only. The 1.91:1 link-ad ratio takes the least vertical space
+    # in feed and loses 71% of its width when a placement crops it to 9:16.
+    # Price, title and the spec row are read out of campaigns.ts at build time
+    # so a paid creative cannot drift from the page it points at.
+    **{
+        f"ad-fall-{label}": (aw, ah, photo_ad(
+            # The landscape frame for both ratios. The portrait one is too tall
+            # to clear the panel: fitting the women's heads in put the boy's
+            # face through the panel edge, and no focal point fixes both at
+            # once. A landscape source crops on width, where this frame has
+            # grass to spare on either side and nobody near the edges.
+            PHOTO_DIR + "family-of-four.jpg",
+            "Fall Photo Special",
+            _FALL["title"], _FALL["price"], _FALL["highlights"],
+            "Limited spots this fall",
+            "graycontentstudio.co/fall-mini-sessions",
+            aw, ah,
+            # Bias up slightly so the faces sit in the upper half of the
+            # band rather than against the panel edge.
+            focal="center 42%",
+        ))
+        for label, aw, ah in (("1x1", 1080, 1080), ("4x5", 1080, 1350))
+    },
+
     "post-event-coverage": (IG_W, IG_H, offer_post(
         "Event coverage",
         "Your event, documented properly.",
