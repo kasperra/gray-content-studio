@@ -70,8 +70,10 @@ wordmark is visible before shipping anything.
 | `yt-brandfilm.png` | 1280×720 | Thumbnail for the brand-film post |
 | `yt-shortform.png` | 1280×720 | Thumbnail for the short-form-strategy post |
 | `fb-credentials.png` | 1200×630 | Facebook / OG card — Fortune 500 credibility play |
-| `ad-fall-1x1.png` | 1080×1080 | Paid FB/IG ad — square |
-| `ad-fall-4x5.png` | 1080×1350 | Paid FB/IG ad — 4:5, most feed real estate |
+| `ad-fall-1x1.png` | 1080×1080 | Paid FB/IG ad — square, one photo |
+| `ad-fall-pair-1x1.png` | 1080×1080 | Paid FB/IG ad — square, two autumn frames side by side |
+| `ad-fall-pair-4x5.png` | 1080×1350 | Paid FB/IG ad — 4:5, two autumn frames stacked |
+| `ad-fall-4x5.png` | 1080×1350 | Paid FB/IG ad — 4:5, one photo, most feed real estate |
 | `post-fall-mini.png` | 1080×1350 | Fall Mini Sessions — the offer and what's included |
 | `post-fall-book.png` | 1080×1350 | Fall Mini Sessions — booking call to action |
 | `post-event-coverage.png` | 1080×1350 | Event coverage — Event Essentials tier |
@@ -81,6 +83,13 @@ wordmark is visible before shipping anything.
 The `ad-fall-*` creatives read price, title and the spec row out of
 `campaigns.ts` at build time rather than repeating them, so a paid ad can't
 drift from the page it points at — re-run the build after changing the offer.
+`photo_ad` takes one photo or two. A pair splits along the band's long axis —
+side by side in the square, stacked at 4:5 — and each frame gets its own focal
+point, because whichever one sits against the panel needs its subject pulled
+clear of that edge. The `-pair-` cuts use the autumn frames and carry identical
+copy to the single-photo ones, so the two can be A/B'd without a second
+variable.
+
 They are 1:1 and 4:5 only: the 1.91:1 link-ad ratio takes the least vertical
 space in feed and loses 71% of its width when a placement crops to 9:16.
 

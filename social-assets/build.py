@@ -347,7 +347,7 @@ def campaign_facts(slug="fall-mini-sessions"):
     }
 
 
-def photo_ad(photo, eyebrow, title, price, highlights, scarcity, url, w, h,
+def photo_ad(photos, eyebrow, title, price, highlights, scarcity, url, w, h,
              focal="center"):
     """Photo-led paid creative, square or 4:5.
 
@@ -361,7 +361,15 @@ def photo_ad(photo, eyebrow, title, price, highlights, scarcity, url, w, h,
     every word. Nothing overlaps a face, contrast is a constant rather than a
     function of whatever is behind the text, and the panel is the same near-black
     the landing page opens on.
+
+    `photos` takes one or two. Two are split along the band's long axis: side by
+    side in the square, stacked at 4:5. The axis is forced by the sources —
+    these frames are all 16:9 landscape, so a square's band is wide enough to
+    halve horizontally, while halving 4:5's band horizontally would crop each
+    one to a narrow portrait and cut people off both edges.
     """
+    if isinstance(photos, str):
+        photos = [photos]
     cells = "".join(
         f'<div class="spec"><div class="speclab">{l}</div>'
         f'<div class="specval">{v}</div></div>'
@@ -370,13 +378,35 @@ def photo_ad(photo, eyebrow, title, price, highlights, scarcity, url, w, h,
     # The 4:5 has 270px more height at the same width; all of it goes to the
     # photograph, which is the thing being sold.
     photo_h = 856 if h > w else 586
+    # A pair needs a hair more room and a seam between the frames, so the two
+    # photographs read as two rather than one accidental panorama.
+    if len(photos) > 1:
+        photo_h = 880 if h > w else 600
+    gap = 6 if len(photos) > 1 else 0
+    # A single frame opens on sky, so the scrim can be deep. A stacked pair puts
+    # a subject near the top of the first frame, so it is cut back to just what
+    # the wordmark row needs.
+    scrim_h = 140 if len(photos) > 1 else 210
+    # One focal for all, or one per photo — a stacked pair rarely wants the same
+    # crop twice, since whichever frame sits against the panel needs its subject
+    # pulled clear of that edge.
+    focals = focal if isinstance(focal, (list, tuple)) else [focal] * len(photos)
+    cells_shots = "".join(
+        f'<div class="shot" style="background-image:url(\'{src}\');'
+        f'background-position:{f}"></div>'
+        for src, f in zip(photos, focals)
+    )
     return page(w, h, f"""
       .frame {{ background:{BG}; }}
-      .shot {{ position:relative; height:{photo_h}px; width:100%;
-        background:{BG} url('{photo}') {focal}/cover no-repeat; }}
+      .shots {{ position:relative; height:{photo_h}px; width:100%; display:flex;
+        flex-direction:{"row" if w >= h else "column"}; gap:{gap}px;
+        background:{BG}; }}
+      .shot {{ position:relative; flex:1 1 0; min-width:0; min-height:0;
+        background:{BG} center/cover no-repeat; }}
       /* Only enough darkening at the very top to hold the wordmark; the
          photograph is otherwise untouched. */
-      .shot::after {{ content:''; position:absolute; inset:0 0 auto 0; height:210px;
+      .shots::after {{ content:''; position:absolute; inset:0 0 auto 0; height:{scrim_h}px;
+        z-index:1;
         background:linear-gradient(to bottom, rgba(11,11,12,.82), rgba(11,11,12,.34) 62%,
           transparent); }}
       .top {{ position:absolute; top:52px; left:64px; right:64px; z-index:2;
@@ -410,11 +440,12 @@ def photo_ad(photo, eyebrow, title, price, highlights, scarcity, url, w, h,
       .url {{ font-family:'Hanken Grotesk',sans-serif; font-size:21px;
         color:{INK}; opacity:.86; }}
     """, f"""
-      <div class="shot">
+      <div class="shots">
         <div class="top">
           <span class="wordmark">Gray&middot;Content&middot;Studio</span>
           <span class="place">Richmond, VA</span>
         </div>
+        {cells_shots}
       </div>
       <div class="panel">
         <div class="eyebrow">{eyebrow}</div>
@@ -586,6 +617,24 @@ ASSETS = {
     # in feed and loses 71% of its width when a placement crops it to 9:16.
     # Price, title and the spec row are read out of campaigns.ts at build time
     # so a paid creative cannot drift from the page it points at.
+    # Two-photo cut, on the autumn frames — the candid and the posed group.
+    # Same copy, same panel; only the imagery differs, so they can be run as an
+    # A/B against the single-photo pair without a second variable.
+    **{
+        f"ad-fall-pair-{label}": (aw, ah, photo_ad(
+            [PHOTO_DIR + "autumn-candid.jpg", PHOTO_DIR + "autumn-family.jpg"],
+            "Fall Photo Special",
+            _FALL["title"], _FALL["price"], _FALL["highlights"],
+            "Limited spots this fall",
+            "graycontentstudio.co/fall-mini-sessions",
+            aw, ah,
+            # Per frame: the top one is pulled down out of the wordmark scrim,
+            # the bottom one pulled up so the standing boy clears the panel edge.
+            focal=["center 24%", "center 62%"],
+        ))
+        for label, aw, ah in (("1x1", 1080, 1080), ("4x5", 1080, 1350))
+    },
+
     **{
         f"ad-fall-{label}": (aw, ah, photo_ad(
             # The landscape frame for both ratios. The portrait one is too tall
