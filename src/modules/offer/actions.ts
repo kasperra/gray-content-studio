@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { createSupabaseAdmin, supabaseConfigured } from "@/lib/supabase/server";
+import { adminDb, dbConfigured } from "@/lib/db";
 import { sendMail } from "@/lib/mail";
 import { renderCouponEmail } from "./email";
 import {
@@ -25,7 +25,7 @@ import {
 const CONFIG_TABLE = "diagnostic_config"; // shared site config store, see 0004
 
 function connected() {
-  return supabaseConfigured() && Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return dbConfigured();
 }
 
 /** Outbound mail is opt-in on env, so skip the render entirely when it's off. */
@@ -56,7 +56,7 @@ async function rateLimited(limit = 8, windowMs = 60_000): Promise<boolean> {
 export async function getOfferSettings(): Promise<OfferSettings> {
   try {
     if (!connected()) return OFFER_DEFAULTS;
-    const { data } = await createSupabaseAdmin().from(CONFIG_TABLE).select("key, value");
+    const { data } = await adminDb().from(CONFIG_TABLE).select("key, value");
     return parseSettings(Object.fromEntries((data ?? []).map((r) => [r.key, r.value])));
   } catch {
     return OFFER_DEFAULTS;
@@ -70,7 +70,7 @@ export async function saveOfferSettings(next: OfferSettings): Promise<{ ok: bool
     const rows = Object.entries(serializeSettings(parseSettings(serializeSettings(next)))).map(
       ([key, value]) => ({ key, value: String(value).slice(0, 2000), updated_at: new Date().toISOString() })
     );
-    const { error } = await createSupabaseAdmin().from(CONFIG_TABLE).upsert(rows);
+    const { error } = await adminDb().from(CONFIG_TABLE).upsert(rows);
     return { ok: !error };
   } catch {
     return { ok: false };
@@ -125,7 +125,7 @@ export async function claimOffer(input: ClaimInput): Promise<ClaimResult> {
   // authorise, so it is not stored as granted even if a stale client sends it.
   const smsConsent = settings.smsEnabled && input.smsConsent === true;
 
-  const admin = createSupabaseAdmin();
+  const admin = adminDb();
   const now = new Date();
 
   // An existing live coupon is returned as-is: one coupon per business.
@@ -302,7 +302,7 @@ export async function setClaimRedeemed(id: string, redeemed: string): Promise<{ 
   await requireAdmin();
   if (!id) return { ok: false, message: "Missing coupon." };
 
-  const { error } = await createSupabaseAdmin()
+  const { error } = await adminDb()
     .from("offer_claims")
     .update({ redeemed_at: redeemed === "true" ? new Date().toISOString() : null })
     .eq("id", id);
@@ -319,7 +319,7 @@ export async function deleteOfferClaim(id: string): Promise<{ ok: boolean; messa
   await requireAdmin();
   if (!id) return { ok: false, message: "Missing coupon." };
 
-  const { error } = await createSupabaseAdmin().from("offer_claims").delete().eq("id", id);
+  const { error } = await adminDb().from("offer_claims").delete().eq("id", id);
   if (error) return { ok: false, message: "Could not delete this coupon." };
   revalidatePath("/admin/offer");
   return { ok: true, message: "Coupon deleted." };

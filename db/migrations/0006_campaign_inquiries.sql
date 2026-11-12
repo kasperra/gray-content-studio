@@ -1,5 +1,5 @@
 -- Seasonal campaign landing pages (/fall-mini-sessions and future seasons).
--- Apply by hand in the Supabase SQL editor (same as the other migrations).
+-- Applied automatically at container start by scripts/migrate.mjs.
 
 -- Campaign inquiries also write into `leads` so they land on the same CRM board
 -- as every other inquiry. `phone` was added by 0004 for the offer popup; this

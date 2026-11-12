@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import type { PostStatus } from "./platforms";
 
@@ -21,7 +21,7 @@ export type SocialPostInput = {
 };
 
 /** Create or update a post. Admins act on any client; clients only on their own
-    (enforced by RLS — the user-scoped Supabase client rejects foreign client_ids). */
+    (enforced by RLS — the user-scoped database client rejects foreign client_ids). */
 export async function saveSocialPost(
   input: SocialPostInput,
   existingId?: string
@@ -32,7 +32,7 @@ export async function saveSocialPost(
   if (!input.caption.trim() && !input.platforms.length)
     return { ok: false, message: "Add a caption or pick a platform first." };
 
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
   const row = {
     client_id: clientId,
     platforms: input.platforms,
@@ -44,13 +44,13 @@ export async function saveSocialPost(
   };
 
   if (existingId) {
-    const { error } = await supabase.from("social_posts").update(row).eq("id", existingId);
+    const { error } = await db.from("social_posts").update(row).eq("id", existingId);
     if (error) return { ok: false, message: "Could not update the post." };
     refreshSocial();
     return { ok: true, id: existingId, message: "Post updated." };
   }
 
-  const { data, error } = await supabase.from("social_posts").insert(row).select("id").single();
+  const { data, error } = await db.from("social_posts").insert(row).select("id").single();
   if (error) return { ok: false, message: "Could not save the post." };
   refreshSocial();
   return { ok: true, id: data.id, message: "Post saved." };
@@ -58,15 +58,15 @@ export async function saveSocialPost(
 
 export async function setSocialPostStatus(postId: string, status: PostStatus) {
   await requireUser();
-  const supabase = await createSupabaseServer();
-  await supabase.from("social_posts").update({ status }).eq("id", postId);
+  const db = await userDb();
+  await db.from("social_posts").update({ status }).eq("id", postId);
   refreshSocial();
 }
 
 export async function deleteSocialPost(postId: string) {
   await requireUser();
-  const supabase = await createSupabaseServer();
-  await supabase.from("social_posts").delete().eq("id", postId);
+  const db = await userDb();
+  await db.from("social_posts").delete().eq("id", postId);
   refreshSocial();
 }
 
@@ -79,7 +79,7 @@ export async function saveTemplate(
   await requireAdmin();
   if (!input.name.trim() || !input.body.trim())
     return { ok: false, message: "Template needs a name and body." };
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
   const row = {
     kind: input.kind,
     name: input.name.trim(),
@@ -87,8 +87,8 @@ export async function saveTemplate(
     client_id: input.clientId ?? null,
   };
   const { error } = existingId
-    ? await supabase.from("content_templates").update(row).eq("id", existingId)
-    : await supabase.from("content_templates").insert(row);
+    ? await db.from("content_templates").update(row).eq("id", existingId)
+    : await db.from("content_templates").insert(row);
   if (error) return { ok: false, message: "Could not save the template." };
   revalidatePath("/admin/templates");
   refreshSocial();
@@ -97,8 +97,8 @@ export async function saveTemplate(
 
 export async function deleteTemplate(templateId: string) {
   await requireAdmin();
-  const supabase = await createSupabaseServer();
-  await supabase.from("content_templates").delete().eq("id", templateId);
+  const db = await userDb();
+  await db.from("content_templates").delete().eq("id", templateId);
   revalidatePath("/admin/templates");
   refreshSocial();
 }
@@ -115,8 +115,8 @@ export async function recordMetric(input: {
   await requireAdmin();
   if (!input.metric.trim() || isNaN(input.value))
     return { ok: false, message: "Metric name and a numeric value are required." };
-  const supabase = await createSupabaseServer();
-  const { error } = await supabase.from("metric_snapshots").insert({
+  const db = await userDb();
+  const { error } = await db.from("metric_snapshots").insert({
     client_id: input.clientId,
     module: input.module,
     metric: input.metric.trim().toLowerCase().replace(/\s+/g, "_"),
@@ -131,7 +131,7 @@ export async function recordMetric(input: {
 
 export async function deleteMetric(metricId: string) {
   await requireAdmin();
-  const supabase = await createSupabaseServer();
-  await supabase.from("metric_snapshots").delete().eq("id", metricId);
+  const db = await userDb();
+  await db.from("metric_snapshots").delete().eq("id", metricId);
   revalidatePath("/admin/analytics");
 }

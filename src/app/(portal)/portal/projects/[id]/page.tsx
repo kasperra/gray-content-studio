@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { STAGES, stageIndex } from "@/modules/projects/stages";
 import { PortalHeader } from "../../PortalHeader";
 import { DeliverableList } from "./DeliverableList";
@@ -15,19 +15,19 @@ export const metadata: Metadata = {
 export default async function PortalProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireUser();
   const { id } = await params;
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
   // RLS scopes this query to the client's own projects (admins see all)
-  const { data: project } = await supabase.from("projects").select("*").eq("id", id).single();
+  const { data: project } = await db.from("projects").select("*").eq("id", id).single();
   if (!project) notFound();
 
   const [{ data: deliverables }, { data: activities }] = await Promise.all([
-    supabase
+    db
       .from("deliverables")
       .select("id, title, status, storage_path, review_versions(id)")
       .eq("project_id", id)
       .order("created_at", { ascending: false }),
-    supabase.from("activities").select("body, created_at").eq("project_id", id).order("created_at", { ascending: false }).limit(15),
+    db.from("activities").select("body, created_at").eq("project_id", id).order("created_at", { ascending: false }).limit(15),
   ]);
 
   const currentIdx = stageIndex(project.stage);

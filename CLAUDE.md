@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Gray Content Studio — a video production company's website **and** agency operating system in one Next.js app. The public marketing site generates leads; a passcode-free, auth-gated `/admin` runs the studio (CRM, proposals, projects, invoices, assets, social, analytics); and `/portal` gives each client an isolated view of their projects, deliverables, files, and numbers. Built in phases; all six roadmap phases plus a pricing→intake integration are shipped and live on Vercel.
+Gray Content Studio — a video production company's website **and** agency operating system in one Next.js app. The public marketing site generates leads; a passcode-free, auth-gated `/admin` runs the studio (CRM, proposals, projects, invoices, assets, social, analytics); and `/portal` gives each client an isolated view of their projects, deliverables, files, and numbers. Built in phases; all six roadmap phases plus a pricing→intake integration are shipped. It runs on a Hostinger VPS (Coolify): one Docker container, a Postgres database and an S3-compatible file store (SeaweedFS), with no outside hosting services.
 
 ## Commands
 
@@ -26,7 +26,9 @@ Discovery is by design — drop a new `*.test.ts` anywhere under `src/` and it r
 
 **Nothing runs them in CI**, so they only catch regressions when invoked. Run them after touching the rate card, the bundle presets, or SOW phase logic — `bundles.test.ts` guards a bug that shipped once already (a preset loading far above the "from" price the pricing card advertises).
 
-Otherwise verification is done by building (`npm run build` catches all type errors) and by driving the running app in a browser against the real Supabase project. When verifying features that touch the database, seed data via the Supabase REST API with the service-role key, exercise the UI, assert against the DB, then delete the test rows.
+`src/lib/db/query.test.ts` checks the query builder and Row Level Security against a real Postgres; it skips unless `TEST_DATABASE_URL` points at a **scratch** database (migrate it first with `DATABASE_URL=… node scripts/migrate.mjs`).
+
+Otherwise verification is done by building (`npm run build` catches all type errors) and by driving the running app in a browser against a local Postgres (and any S3-compatible store for files): seed rows with SQL, exercise the UI, assert against the DB.
 
 ## Stack & non-obvious conventions
 
@@ -42,7 +44,7 @@ Otherwise verification is done by building (`npm run build` catches all type err
 - `(admin)/admin/` — studio OS, admin-role only. Its `layout.tsx` calls `requireAdmin()` and renders the tab bar. Subroutes: dashboard (leads + computed follow-ups), `crm`, `clients` + `clients/[id]`, `proposals` + `proposals/new`, `invoices`, `assets`, `social`, `templates`, `analytics`, `campaigns`, `projects/[id]`.
 - `(portal)/portal/` — client-facing dashboard, any authed user. Projects, `projects/[id]`, `assets`, `social`. Read-mostly mirror of the admin data the client owns.
 - `/review/[deliverableId]` — shared video review room used by **both** roles (HTML5 player, timestamped comments, versions, approve/request-changes).
-- `/p/[id]` — public, unguessable proposal page a prospect opens without logging in (print-to-PDF). Fetched by `public_id` via the **service-role** client because proposals aren't publicly readable under RLS.
+- `/p/[id]` — public, unguessable proposal page a prospect opens without logging in (print-to-PDF). Fetched by `public_id` via `adminDb()` because proposals aren't publicly readable under RLS.
 - `/login` — email/password auth; redirects admins to `/admin`, clients to `/portal`.
 
 ### Business logic: `src/modules/<domain>/`
@@ -51,16 +53,17 @@ Each domain (`leads`, `proposals`, `clients`, `projects`, `crm`, `assets`, `soci
 - **`src/modules/campaigns/`** drives the seasonal landing pages. One layout (`CampaignPage.tsx`) renders any campaign; every string, price, inclusion, gallery slot and form option comes from a `Campaign` object in `campaigns.ts`, and the palette from a theme in `campaign.ts`. A route file is three lines (`campaignRoute(slug)`) — the "Adding a season" note at the top of `campaigns.ts` is the procedure. The studio edits the offer, price, copy, CTA and both emails from **Admin → Campaigns** without a deploy; those overrides live in the shared `diagnostic_config` store under `campaign_<slug>_*`, with the code values as fallbacks, so a blank or malformed row can never publish an empty page.
 - **`src/modules/pricing/`** is the canonical rate card (86 services, ported from `Pricing strategy.xlsx`). `computeEstimate()` in `compute.ts` is a **pure, server-trusted** totals function — always recompute estimates/proposals server-side rather than trusting client-sent numbers. `EstimateBuilder.tsx` is the shared calculator UI used by both the public `/pricing` page and the admin proposal builder.
 
-### Supabase (`src/lib/`)
-- `lib/supabase/server.ts` exposes three clients: `createSupabaseServer()` (cookie-scoped, respects the logged-in user's RLS), `createSupabaseAdmin()` (**service-role, bypasses RLS** — server-only; used for lead inserts, public proposal reads, cross-client name lookups, and privileged writes clients can't do themselves), and `supabaseConfigured()` (env guard — the app degrades gracefully to a "portal not connected" state when keys are absent).
-- `lib/supabase/client.ts` — browser client for auth and Storage signed-URL/upload calls made from Client Components.
-- `lib/auth.ts` — `requireUser()` / `requireAdmin()` do the session+profile lookup and redirect; call them at the top of every protected server component.
-- `lib/storage.ts` — client-side helpers. **All uploads go under a `<client_id>/…` path prefix** because the Storage RLS policies key off the first path segment; never break that convention or clients lose access to their own files.
+### Database, logins and files (`src/lib/`)
+- `lib/db/index.ts` exposes `userDb()` (queries run as the logged-in user, so **RLS applies**), `adminDb()` (the owner connection, **bypasses RLS** — server-only; used for lead inserts, public proposal reads, cross-client name lookups, and privileged writes clients can't do themselves), `dbAs(userId)` and `dbConfigured()` (env guard — the app degrades to a "portal not connected" state when `DATABASE_URL` is absent).
+- `lib/db/query.ts` is a small chainable query builder (`db.from("projects").select("id, clients(company)").eq(...).order(...)`) compiled to plain SQL. It supports only what the app uses: select with embedded relations resolved from real foreign keys, insert/update/upsert/delete, `eq/neq/lt/lte/gt/gte/in/is/not/ilike/or/match`, `order`, `limit`, `single/maybeSingle`, `count`. It never throws; every call resolves to `{ data, error, count }`.
+- How RLS works: `userDb()` wraps each query in a transaction that does `set role authenticated` and sets `app.user_id`; `auth.uid()` (db/migrations/0000) reads it, so the policies in 0001+ apply as written.
+- `lib/auth/` — the app's own email/password login. `session.ts`: bcrypt password hashes in `auth.users`, httpOnly `gcs_session` cookie whose sha256 is the `auth.sessions` row, 30-day sliding expiry. `index.ts`: `getSession()` / `requireUser()` / `requireAdmin()` — call one at the top of every protected server component. `users.ts`: `createUser()` / `deleteUser()`. Actions (sign in/out, reset email, set password) are in `modules/auth/actions.ts`; reset links land on `/auth/confirm?token=…`. `proxy.ts` only checks the cookie exists; the real check is `requireUser()`.
+- `lib/files/server.ts` — private file store (S3 API, server-side only). Uploads go to `POST /api/files/upload` (admin only) and stream through; downloads use short-lived HMAC-signed links to `/api/files/<bucket>/<path>` handed out by `getDownloadUrls()` (`modules/files/actions.ts`) after an access check. `lib/storage.ts` has the browser helpers. **All uploads go under a `<client_id>/…` path prefix** — client read access keys off that first segment; never break that convention or clients lose access to their own files.
 
 ### Data model & security
-- One migration dir: `supabase/migrations/`. `0001_init.sql` creates the full schema (17 tables across identity/CRM/sales/production/review/assets/social/analytics), all RLS policies, three private Storage buckets (`deliverables`, `assets`, `documents`), and triggers (auto-create `profiles` on signup, `updated_at` touch). Later numbered files are incremental `alter`s (`0006` adds `campaign_inquiries`). **Migrations are applied by hand in the Supabase SQL editor**, not by a CLI — server actions that use a newly-added column should tolerate its absence (see the estimate-column fallback in `modules/leads/actions.ts`).
+- One migration dir: `db/migrations/`. `0000_bootstrap.sql` sets up roles, the `auth` schema (users, sessions, reset tokens) and `auth.uid()`. `0001_init.sql` creates the full schema (17 tables across identity/CRM/sales/production/review/assets/social/analytics), all RLS policies, and triggers (auto-create `profiles` on signup, `updated_at` touch). Later numbered files are incremental. **Migrations run automatically at container start** (`scripts/migrate.mjs`, tracked in `public._migrations`); add a new numbered file, never edit an applied one.
 - **RLS is the security boundary.** The universal pattern: admins (`profiles.role = 'admin'`) see everything; clients see only rows where `client_id` matches their profile, enforced by the `auth_role()` / `auth_client_id()` SQL helper functions. When adding a table, add matching policies or clients will be locked out (or worse, over-exposed).
-- **Roles:** `profiles.role` is `admin` or `client`, with `client_id` linking a client login to its `clients` row. New client logins are provisioned admin-side via `createSupabaseAdmin().auth.admin.createUser()` (returns a one-time temp password to share).
+- **Roles:** `profiles.role` is `admin` or `client`, with `client_id` linking a client login to its `clients` row. New client logins are provisioned admin-side via `createUser()` in `lib/auth/users.ts` (returns a one-time temp password to share).
 
 ## Data flow worth knowing
 
@@ -69,7 +72,9 @@ Each domain (`leads`, `proposals`, `clients`, `projects`, `crm`, `assets`, `soci
 
 ## Deploying
 
-Push to `main` → Vercel auto-builds and deploys. Environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SITE_URL`) live in Vercel project settings **and** local `.env.local` (git-ignored; `.env.example` documents them). Env-var changes only take effect on builds created *after* they're saved — redeploy after editing them. The Vercel project's Framework Preset must be **Next.js**.
+Push to `main` → Coolify on the VPS builds the `Dockerfile` and restarts the container (migrations run first). Runtime env vars live in Coolify (`.env.example` documents them): `DATABASE_URL`, `AUTH_SECRET`, `S3_*`, `NEXT_PUBLIC_SITE_URL` (build-time too), and the optional mail ones. Backups: Coolify's nightly Postgres backup plus a nightly off-server copy of the database and files.
+
+`scripts/import-from-supabase.sh` and `scripts/copy-files-from-supabase.mjs` were the one-time move off the old hosted backend (database + logins, then files); kept for reference.
 
 ## Explicitly out of scope (flagged, not built)
 

@@ -1,4 +1,4 @@
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { STAGES } from "@/modules/projects/stages";
 import { deleteMetric } from "@/modules/social/actions";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
@@ -7,18 +7,18 @@ import { MetricRecorder } from "./MetricRecorder";
 const DAY = 24 * 60 * 60 * 1000;
 
 export default async function AnalyticsPage() {
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
   const [{ data: projects }, { data: versions }, { data: metrics }, { data: clients }] =
     await Promise.all([
-      supabase.from("projects").select("id, title, stage, created_at, updated_at"),
-      supabase.from("review_versions").select("deliverable_id, version"),
-      supabase
+      db.from("projects").select("id, title, stage, created_at, updated_at"),
+      db.from("review_versions").select("deliverable_id, version"),
+      db
         .from("metric_snapshots")
         .select("id, metric, module, value, captured_on, clients(company)")
         .order("captured_on", { ascending: false })
         .limit(60),
-      supabase.from("clients").select("id, company").order("company"),
+      db.from("clients").select("id, company").order("company"),
     ]);
 
   /* ---- Production metrics (computed live) ---- */

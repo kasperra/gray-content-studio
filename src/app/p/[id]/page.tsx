@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { createSupabaseAdmin, supabaseConfigured } from "@/lib/supabase/server";
+import { adminDb, dbConfigured } from "@/lib/db";
 import { money } from "@/modules/pricing/data";
 import type { LineItem } from "@/modules/pricing/compute";
 import { PrintButton } from "./PrintButton";
@@ -13,8 +13,8 @@ export const metadata: Metadata = {
 /* Public proposal view — fetched by unguessable public_id via the service role
    (proposals are not publicly readable under RLS). */
 async function getProposal(publicId: string) {
-  if (!supabaseConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) return null;
-  const admin = createSupabaseAdmin();
+  if (!dbConfigured()) return null;
+  const admin = adminDb();
   const { data } = await admin.from("proposals").select("*").eq("public_id", publicId).single();
   return data;
 }

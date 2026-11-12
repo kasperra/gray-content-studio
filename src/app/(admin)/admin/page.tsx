@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { computeFollowUps } from "@/modules/crm/actions";
 import { money } from "@/modules/pricing/data";
 
 export default async function AdminDashboardPage() {
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
   const [
     { data: leads },
@@ -14,11 +14,11 @@ export default async function AdminDashboardPage() {
     { data: activities },
     followUps,
   ] = await Promise.all([
-    supabase.from("leads").select("id, status"),
-    supabase.from("proposals").select("total, status"),
-    supabase.from("projects").select("id", { count: "exact", head: true }).neq("stage", "completed"),
-    supabase.from("invoices").select("amount, status"),
-    supabase.from("activities").select("body, kind, created_at").order("created_at", { ascending: false }).limit(15),
+    db.from("leads").select("id, status"),
+    db.from("proposals").select("total, status"),
+    db.from("projects").select("id", { count: "exact", head: true }).neq("stage", "completed"),
+    db.from("invoices").select("amount, status"),
+    db.from("activities").select("body, kind, created_at").order("created_at", { ascending: false }).limit(15),
     computeFollowUps(),
   ]);
 

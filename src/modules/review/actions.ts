@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseServer, createSupabaseAdmin } from "@/lib/supabase/server";
+import { userDb, adminDb } from "@/lib/db";
 import { requireAdmin, requireUser } from "@/lib/auth";
 
 function refreshReview(deliverableId: string) {
@@ -15,16 +15,16 @@ export async function addReviewVersion(input: {
   storagePath: string;
 }): Promise<{ ok: boolean; message: string }> {
   await requireAdmin();
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
-  const { data: deliverable } = await supabase
+  const { data: deliverable } = await db
     .from("deliverables")
     .select("id, title, project_id, projects(client_id, title)")
     .eq("id", input.deliverableId)
     .single();
   if (!deliverable) return { ok: false, message: "Deliverable not found." };
 
-  const { data: latest } = await supabase
+  const { data: latest } = await db
     .from("review_versions")
     .select("version")
     .eq("deliverable_id", input.deliverableId)
@@ -32,7 +32,7 @@ export async function addReviewVersion(input: {
     .limit(1);
   const nextVersion = (latest?.[0]?.version ?? 0) + 1;
 
-  const { error } = await supabase.from("review_versions").insert({
+  const { error } = await db.from("review_versions").insert({
     deliverable_id: input.deliverableId,
     version: nextVersion,
     storage_path: input.storagePath,
@@ -40,11 +40,11 @@ export async function addReviewVersion(input: {
   });
   if (error) return { ok: false, message: "Could not create the review version." };
 
-  await supabase.from("deliverables").update({ status: "in_review" }).eq("id", input.deliverableId);
+  await db.from("deliverables").update({ status: "in_review" }).eq("id", input.deliverableId);
 
   const project = deliverable.projects as unknown as { client_id: string; title: string } | null;
   if (project) {
-    await supabase.from("activities").insert({
+    await db.from("activities").insert({
       client_id: project.client_id,
       project_id: deliverable.project_id,
       kind: "system",
@@ -66,9 +66,9 @@ export async function addReviewComment(input: {
 }): Promise<{ ok: boolean; message: string }> {
   const session = await requireUser();
   if (!input.body.trim()) return { ok: false, message: "Write a comment first." };
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
-  const { error } = await supabase.from("review_comments").insert({
+  const { error } = await db.from("review_comments").insert({
     version_id: input.versionId,
     author: session.userId,
     body: input.body.trim(),
@@ -81,8 +81,8 @@ export async function addReviewComment(input: {
 
 export async function toggleCommentResolved(commentId: string, deliverableId: string, resolved: boolean) {
   await requireAdmin();
-  const supabase = await createSupabaseServer();
-  await supabase.from("review_comments").update({ resolved }).eq("id", commentId);
+  const db = await userDb();
+  await db.from("review_comments").update({ resolved }).eq("id", commentId);
   refreshReview(deliverableId);
 }
 
@@ -95,17 +95,17 @@ export async function setVersionStatus(input: {
   status: "approved" | "changes_requested";
 }): Promise<{ ok: boolean; message: string }> {
   const session = await requireUser();
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
   // RLS-scoped: returns a row only if this user may see this version
-  const { data: version } = await supabase
+  const { data: version } = await db
     .from("review_versions")
     .select("id, version, deliverables(id, title, project_id, projects(client_id, title))")
     .eq("id", input.versionId)
     .single();
   if (!version) return { ok: false, message: "Version not found." };
 
-  const admin = createSupabaseAdmin();
+  const admin = adminDb();
   const { error } = await admin
     .from("review_versions")
     .update({ status: input.status })

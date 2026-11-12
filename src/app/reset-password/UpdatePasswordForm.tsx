@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createSupabaseBrowser } from "@/lib/supabase/client";
+import { updatePassword } from "@/modules/auth/actions";
 
 const fieldCls =
   "w-full font-body text-base text-ink bg-bg border border-rule rounded px-4 py-3 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/50 transition-colors";
@@ -29,22 +29,14 @@ export function UpdatePasswordForm({ email }: { email: string }) {
     }
     setPending(true);
     try {
-      const supabase = createSupabaseBrowser();
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) {
-        setError(error.message || "Couldn't update your password. The link may have expired.");
+      const res = await updatePassword(password);
+      if (!res.ok) {
+        setError(res.error || "Couldn't update your password. The link may have expired.");
         return;
       }
       setDone(true);
       // Route by role once the new password is set.
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      let dest = "/portal";
-      if (user) {
-        const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-        dest = profile?.role === "admin" ? "/admin" : "/portal";
-      }
+      const dest = res.dest;
       setTimeout(() => {
         router.replace(dest);
         router.refresh();

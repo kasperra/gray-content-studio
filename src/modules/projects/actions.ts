@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { removeObjects } from "@/lib/files/server";
+import { userDb } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { stageLabel, type StageId } from "./stages";
 
@@ -20,8 +21,8 @@ export async function createProject(input: {
   await requireAdmin();
   if (!input.clientId || !input.title.trim())
     return { ok: false, message: "Client and title are required." };
-  const supabase = await createSupabaseServer();
-  const { data, error } = await supabase
+  const db = await userDb();
+  const { data, error } = await db
     .from("projects")
     .insert({
       client_id: input.clientId,
@@ -34,7 +35,7 @@ export async function createProject(input: {
     .single();
   if (error) return { ok: false, message: "Could not create the project." };
 
-  await supabase.from("activities").insert({
+  await db.from("activities").insert({
     client_id: input.clientId,
     project_id: data.id,
     kind: "system",
@@ -48,8 +49,8 @@ export async function createProject(input: {
 
 export async function updateProjectStage(projectId: string, stage: StageId) {
   await requireAdmin();
-  const supabase = await createSupabaseServer();
-  const { data: project } = await supabase
+  const db = await userDb();
+  const { data: project } = await db
     .from("projects")
     .update({ stage })
     .eq("id", projectId)
@@ -57,7 +58,7 @@ export async function updateProjectStage(projectId: string, stage: StageId) {
     .single();
 
   if (project) {
-    await supabase.from("activities").insert({
+    await db.from("activities").insert({
       client_id: project.client_id,
       project_id: projectId,
       kind: "status_change",
@@ -74,16 +75,16 @@ export async function addDeliverable(input: {
 }): Promise<{ ok: boolean; message: string }> {
   await requireAdmin();
   if (!input.title.trim()) return { ok: false, message: "Deliverable needs a title." };
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
-  const { data: project } = await supabase
+  const { data: project } = await db
     .from("projects")
     .select("client_id, title")
     .eq("id", input.projectId)
     .single();
   if (!project) return { ok: false, message: "Project not found." };
 
-  const { error } = await supabase.from("deliverables").insert({
+  const { error } = await db.from("deliverables").insert({
     project_id: input.projectId,
     title: input.title.trim(),
     storage_path: input.storagePath,
@@ -91,7 +92,7 @@ export async function addDeliverable(input: {
   });
   if (error) return { ok: false, message: "Could not add the deliverable." };
 
-  await supabase.from("activities").insert({
+  await db.from("activities").insert({
     client_id: project.client_id,
     project_id: input.projectId,
     kind: "system",
@@ -108,23 +109,23 @@ export async function setDeliverableStatus(
   status: "pending" | "in_review" | "approved" | "delivered"
 ) {
   await requireAdmin();
-  const supabase = await createSupabaseServer();
-  await supabase.from("deliverables").update({ status }).eq("id", deliverableId);
+  const db = await userDb();
+  await db.from("deliverables").update({ status }).eq("id", deliverableId);
   refresh(projectId);
 }
 
 export async function deleteDeliverable(deliverableId: string, projectId: string) {
   await requireAdmin();
-  const supabase = await createSupabaseServer();
-  const { data: d } = await supabase
+  const db = await userDb();
+  const { data: d } = await db
     .from("deliverables")
     .select("storage_path")
     .eq("id", deliverableId)
     .single();
   if (d?.storage_path) {
-    await supabase.storage.from("deliverables").remove([d.storage_path]);
+    await removeObjects("deliverables", [d.storage_path]);
   }
-  await supabase.from("deliverables").delete().eq("id", deliverableId);
+  await db.from("deliverables").delete().eq("id", deliverableId);
   refresh(projectId);
 }
 
@@ -139,10 +140,10 @@ export async function addDocument(input: {
 }): Promise<{ ok: boolean; message: string }> {
   await requireAdmin();
   if (!input.title.trim()) return { ok: false, message: "Document needs a title." };
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
   if (input.kind === "contract") {
-    const { error } = await supabase.from("contracts").insert({
+    const { error } = await db.from("contracts").insert({
       client_id: input.clientId,
       title: input.title.trim(),
       storage_path: input.storagePath,
@@ -150,7 +151,7 @@ export async function addDocument(input: {
     });
     if (error) return { ok: false, message: "Could not save the contract." };
   } else {
-    const { error } = await supabase.from("invoices").insert({
+    const { error } = await db.from("invoices").insert({
       client_id: input.clientId,
       number: input.title.trim(),
       amount: input.amount ?? 0,
@@ -160,7 +161,7 @@ export async function addDocument(input: {
     if (error) return { ok: false, message: "Could not save the invoice." };
   }
 
-  await supabase.from("activities").insert({
+  await db.from("activities").insert({
     client_id: input.clientId,
     project_id: input.projectId ?? null,
     kind: "system",
@@ -179,23 +180,23 @@ export async function deleteProject(
 ): Promise<{ ok: boolean; message: string }> {
   await requireAdmin();
   if (!projectId) return { ok: false, message: "Missing project." };
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
-  const { data: project } = await supabase
+  const { data: project } = await db
     .from("projects")
     .select("client_id")
     .eq("id", projectId)
     .single();
 
   // Remove deliverable files before the cascade drops their rows.
-  const { data: dels } = await supabase
+  const { data: dels } = await db
     .from("deliverables")
     .select("storage_path")
     .eq("project_id", projectId);
   const paths = (dels ?? []).map((d) => d.storage_path).filter(Boolean) as string[];
-  if (paths.length) await supabase.storage.from("deliverables").remove(paths);
+  if (paths.length) await removeObjects("deliverables", paths);
 
-  const { error } = await supabase.from("projects").delete().eq("id", projectId);
+  const { error } = await db.from("projects").delete().eq("id", projectId);
   if (error) return { ok: false, message: "Could not delete the project." };
 
   refresh(projectId);
@@ -209,18 +210,18 @@ export async function deleteContract(
 ): Promise<{ ok: boolean; message: string }> {
   await requireAdmin();
   if (!contractId) return { ok: false, message: "Missing document." };
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
-  const { data: contract } = await supabase
+  const { data: contract } = await db
     .from("contracts")
     .select("storage_path, client_id")
     .eq("id", contractId)
     .single();
   if (contract?.storage_path) {
-    await supabase.storage.from("documents").remove([contract.storage_path]);
+    await removeObjects("documents", [contract.storage_path]);
   }
 
-  const { error } = await supabase.from("contracts").delete().eq("id", contractId);
+  const { error } = await db.from("contracts").delete().eq("id", contractId);
   if (error) return { ok: false, message: "Could not delete the document." };
 
   if (contract?.client_id) revalidatePath(`/admin/clients/${contract.client_id}`);

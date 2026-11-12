@@ -1,16 +1,16 @@
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { money } from "@/modules/pricing/data";
 import { InvoiceRows } from "./InvoiceRows";
 import { NewInvoiceForm } from "./NewInvoiceForm";
 
 export default async function InvoicesPage() {
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
   const [{ data: invoices }, { data: clients }] = await Promise.all([
-    supabase
+    db
       .from("invoices")
       .select("id, number, amount, due_date, status, created_at, clients(company)")
       .order("created_at", { ascending: false }),
-    supabase.from("clients").select("id, company").order("company"),
+    db.from("clients").select("id, company").order("company"),
   ]);
 
   const today = new Date().toISOString().slice(0, 10);
