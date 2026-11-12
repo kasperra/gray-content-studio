@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { Wordmark } from "@/components/Nav";
-import { createSupabaseServer, supabaseConfigured } from "@/lib/supabase/server";
+import { dbConfigured } from "@/lib/db";
+import { currentUser } from "@/lib/auth/session";
 import { UpdatePasswordForm } from "./UpdatePasswordForm";
 
 export const metadata: Metadata = {
@@ -10,13 +12,11 @@ export const metadata: Metadata = {
 };
 
 export default async function ResetPasswordPage() {
-  if (!supabaseConfigured()) redirect("/login?setup=1");
+  await connection();
+  if (!dbConfigured()) redirect("/login?setup=1");
 
   // The recovery link (via /auth/confirm) has already established a session.
-  const supabase = await createSupabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await currentUser();
 
   // No recovery session → the link was missing, expired, or already used.
   if (!user) redirect("/login?error=reset_expired");

@@ -1,10 +1,10 @@
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { NewClientForm } from "./NewClientForm";
 import { ClientListCard } from "./ClientListCard";
 
 export default async function ClientsPage() {
-  const supabase = await createSupabaseServer();
-  const { data: clients } = await supabase
+  const db = await userDb();
+  const { data: clients } = await db
     .from("clients")
     .select("id, company, contact_name, contact_email, created_at, projects(id)")
     .order("created_at", { ascending: false });

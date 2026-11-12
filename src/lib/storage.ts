@@ -1,33 +1,35 @@
 "use client";
 
-import { createSupabaseBrowser } from "./supabase/client";
+import { getDownloadUrls } from "@/modules/files/actions";
+
+type Bucket = "deliverables" | "documents" | "assets";
 
 /** Upload a file from the browser (admin session) into a client-scoped folder.
-    Paths follow `<client_id>/...` — the storage RLS policies key off that first segment. */
+    Paths follow `<client_id>/...` — client read access keys off that first
+    segment, so never break that convention or clients lose their own files. */
 export async function uploadClientFile(
-  bucket: "deliverables" | "documents" | "assets",
+  bucket: Bucket,
   clientId: string,
   file: File,
   subfolder?: string
 ): Promise<{ path: string | null; error: string | null }> {
-  const supabase = createSupabaseBrowser();
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const path = [clientId, subfolder, `${Date.now()}-${safeName}`].filter(Boolean).join("/");
-  const { error } = await supabase.storage.from(bucket).upload(path, file, {
-    cacheControl: "3600",
-    upsert: false,
-  });
-  if (error) return { path: null, error: error.message };
-  return { path, error: null };
+  const qs = new URLSearchParams({ bucket, clientId, subfolder: subfolder ?? "", name: file.name });
+  try {
+    const res = await fetch(`/api/files/upload?${qs}`, {
+      method: "POST",
+      headers: { "content-type": file.type || "application/octet-stream" },
+      body: file,
+    });
+    const json = (await res.json().catch(() => ({}))) as { path?: string; error?: string };
+    if (!res.ok || !json.path) return { path: null, error: json.error ?? `Upload failed (${res.status})` };
+    return { path: json.path, error: null };
+  } catch (e) {
+    return { path: null, error: e instanceof Error ? e.message : "Upload failed" };
+  }
 }
 
-/** Short-lived signed URL for downloading a private file (works for any user whose
-    RLS lets them read the object). */
-export async function getDownloadUrl(
-  bucket: "deliverables" | "documents" | "assets",
-  path: string
-): Promise<string | null> {
-  const supabase = createSupabaseBrowser();
-  const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 10);
-  return data?.signedUrl ?? null;
+/** Short-lived link for downloading a private file (only if the viewer may read it). */
+export async function getDownloadUrl(bucket: Bucket, path: string, ttlSeconds = 600): Promise<string | null> {
+  const [url] = await getDownloadUrls(bucket, [path], ttlSeconds);
+  return url ?? null;
 }

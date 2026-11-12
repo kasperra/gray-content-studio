@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { deleteProject } from "@/modules/projects/actions";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { ProjectManager } from "./ProjectManager";
 
 export default async function AdminProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
-  const { data: project } = await supabase
+  const { data: project } = await db
     .from("projects")
     .select("*, clients(id, company)")
     .eq("id", id)
@@ -17,8 +17,8 @@ export default async function AdminProjectPage({ params }: { params: Promise<{ i
   if (!project) notFound();
 
   const [{ data: deliverables }, { data: activities }] = await Promise.all([
-    supabase.from("deliverables").select("*").eq("project_id", id).order("created_at", { ascending: false }),
-    supabase.from("activities").select("body, created_at").eq("project_id", id).order("created_at", { ascending: false }).limit(20),
+    db.from("deliverables").select("*").eq("project_id", id).order("created_at", { ascending: false }),
+    db.from("activities").select("body, created_at").eq("project_id", id).order("created_at", { ascending: false }).limit(20),
   ]);
 
   const client = project.clients as { id: string; company: string } | null;

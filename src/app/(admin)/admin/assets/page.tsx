@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { AssetManager } from "./AssetManager";
 
 export default async function AdminAssetsPage({
@@ -8,9 +8,9 @@ export default async function AdminAssetsPage({
   searchParams: Promise<{ client?: string; folder?: string }>;
 }) {
   const { client: clientParam, folder: folderParam } = await searchParams;
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
-  const { data: clients } = await supabase.from("clients").select("id, company").order("company");
+  const { data: clients } = await db.from("clients").select("id, company").order("company");
   const selectedClient = clients?.find((c) => c.id === clientParam) ?? clients?.[0] ?? null;
 
   if (!selectedClient) {
@@ -25,8 +25,8 @@ export default async function AdminAssetsPage({
   }
 
   const [{ data: folders }, { data: assets }] = await Promise.all([
-    supabase.from("asset_folders").select("id, name").eq("client_id", selectedClient.id).order("name"),
-    supabase
+    db.from("asset_folders").select("id, name").eq("client_id", selectedClient.id).order("name"),
+    db
       .from("assets")
       .select("id, name, kind, storage_path, tags, created_at, version_of, folder_id")
       .eq("client_id", selectedClient.id)

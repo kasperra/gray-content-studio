@@ -1,4 +1,4 @@
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { getOfferSettings, deleteOfferClaim } from "@/modules/offer/actions";
 import { checkMailer } from "@/modules/diagnostic/email";
 import { OFFER_CHOICES } from "@/modules/offer/config";
@@ -48,9 +48,9 @@ function isExpired(c: { redeemed_at: string | null; expires_at: string | null })
 }
 
 export default async function AdminOfferPage() {
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
   const [{ data, error }, settings, mailer] = await Promise.all([
-    supabase.from("offer_claims").select("*").order("created_at", { ascending: false }).limit(500),
+    db.from("offer_claims").select("*").order("created_at", { ascending: false }).limit(500),
     getOfferSettings(),
     checkMailer(),
   ]);
@@ -63,8 +63,8 @@ export default async function AdminOfferPage() {
         <div className="rounded-lg border border-accent/40 bg-accent-soft p-6 max-w-[64ch]">
           <p className="font-semibold">The offer tables aren&apos;t set up yet.</p>
           <p className="text-muted text-[0.92rem] mt-2 leading-relaxed">
-            Run <code className="text-accent">supabase/migrations/0004_offer_popup.sql</code> in the
-            Supabase SQL editor, then reload. The popup stays off until you switch it on here.
+            Run <code className="text-accent">db/migrations/0004_offer_popup.sql</code> in the
+            database, then reload. The popup stays off until you switch it on here.
           </p>
         </div>
       </>

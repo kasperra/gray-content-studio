@@ -1,4 +1,4 @@
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { ProposalBuilder, type LoadedProposal } from "./ProposalBuilder";
 
 export default async function NewProposalPage({
@@ -9,7 +9,7 @@ export default async function NewProposalPage({
   const params = await searchParams;
   const editId = typeof params.edit === "string" ? params.edit : undefined;
   const leadId = typeof params.lead === "string" ? params.lead : undefined;
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
   // Prefill from a lead's calculator estimate (services, rush, travel + contact info)
   let fromLead:
@@ -24,7 +24,7 @@ export default async function NewProposalPage({
       }
     | undefined;
   if (leadId && !editId) {
-    const { data: lead } = await supabase
+    const { data: lead } = await db
       .from("leads")
       .select("id, name, company, email, estimate")
       .eq("id", leadId)
@@ -49,7 +49,7 @@ export default async function NewProposalPage({
 
   let loaded: LoadedProposal | undefined;
   if (editId) {
-    const { data } = await supabase.from("proposals").select("*").eq("id", editId).single();
+    const { data } = await db.from("proposals").select("*").eq("id", editId).single();
     if (data) {
       loaded = {
         id: data.id,

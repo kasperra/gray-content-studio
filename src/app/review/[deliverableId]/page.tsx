@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { createSupabaseServer, createSupabaseAdmin } from "@/lib/supabase/server";
+import { userDb, adminDb } from "@/lib/db";
 import { Wordmark } from "@/components/Nav";
 import { SignOutButton } from "@/app/(portal)/portal/SignOutButton";
 import { ReviewRoom } from "./ReviewRoom";
@@ -22,17 +22,17 @@ export default async function ReviewPage({
   const session = await requireUser();
   const { deliverableId } = await params;
   const { v } = await searchParams;
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
   // RLS scopes this to the caller (client sees only own projects)
-  const { data: deliverable } = await supabase
+  const { data: deliverable } = await db
     .from("deliverables")
     .select("id, title, status, project_id, projects(id, title, client_id)")
     .eq("id", deliverableId)
     .single();
   if (!deliverable) notFound();
 
-  const { data: versions } = await supabase
+  const { data: versions } = await db
     .from("review_versions")
     .select("id, version, storage_path, status, created_at")
     .eq("deliverable_id", deliverableId)
@@ -51,7 +51,7 @@ export default async function ReviewPage({
     createdAt: string;
   }[] = [];
   if (activeVersion) {
-    const admin = createSupabaseAdmin();
+    const admin = adminDb();
     const { data: rows } = await admin
       .from("review_comments")
       .select("id, body, timestamp_seconds, resolved, created_at, author")

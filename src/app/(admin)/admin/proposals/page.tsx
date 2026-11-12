@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { money } from "@/modules/pricing/data";
 import { BUNDLES } from "@/modules/pricing/bundles";
 import { ProposalRowActions } from "./ProposalRowActions";
 
 export default async function ProposalsPage() {
-  const supabase = await createSupabaseServer();
-  const { data: proposals } = await supabase
+  const db = await userDb();
+  const { data: proposals } = await db
     .from("proposals")
     .select("id, public_id, client_name, company, title, total, status, created_at")
     .order("created_at", { ascending: false })

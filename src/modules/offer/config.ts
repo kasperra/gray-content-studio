@@ -1,6 +1,6 @@
 /* First-visit offer popup — shared constants and pure helpers.
 
-   Deliberately free of React and Supabase imports so the rules that decide a
+   Deliberately free of React and database imports so the rules that decide a
    coupon's code and expiry can be checked in a plain node process
    (see offer.test.ts), and so the client bundle can import the copy. */
 

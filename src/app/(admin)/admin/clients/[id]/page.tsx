@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { createSupabaseServer, createSupabaseAdmin } from "@/lib/supabase/server";
+import { userDb, adminDb } from "@/lib/db";
 import { stageLabel } from "@/modules/projects/stages";
 import { deleteProject, deleteContract } from "@/modules/projects/actions";
 import { deleteInvoice } from "@/modules/crm/actions";
@@ -11,17 +11,17 @@ import { DeleteClientPanel } from "./DeleteClientPanel";
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
-  const { data: client } = await supabase.from("clients").select("*").eq("id", id).single();
+  const { data: client } = await db.from("clients").select("*").eq("id", id).single();
   if (!client) notFound();
 
   const [{ data: projects }, { data: profiles }, { data: contracts }, { data: invoices }] =
     await Promise.all([
-      supabase.from("projects").select("id, title, stage, due_date").eq("client_id", id).order("created_at", { ascending: false }),
-      createSupabaseAdmin().from("profiles").select("id, name").eq("client_id", id),
-      supabase.from("contracts").select("id, title, status").eq("client_id", id),
-      supabase.from("invoices").select("id, number, amount, status").eq("client_id", id),
+      db.from("projects").select("id, title, stage, due_date").eq("client_id", id).order("created_at", { ascending: false }),
+      adminDb().from("profiles").select("id, name").eq("client_id", id),
+      db.from("contracts").select("id, title, status").eq("client_id", id),
+      db.from("invoices").select("id, number, amount, status").eq("client_id", id),
     ]);
 
   return (

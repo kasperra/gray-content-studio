@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { DIMENSIONS, DIMENSION_LABELS, type Dimension } from "@/modules/diagnostic/types";
 import { STAGES } from "@/modules/diagnostic/content";
 import { optionLabel } from "@/modules/diagnostic/questions";
@@ -74,9 +74,9 @@ export default async function AdminDiagnosticPage({
   const fUrgency = one("urgency");
   const fQuery = one("q");
 
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
-  let query = supabase
+  let query = db
     .from("diagnostic_results")
     .select("*")
     .order("created_at", { ascending: false })
@@ -90,9 +90,9 @@ export default async function AdminDiagnosticPage({
 
   const [{ data: rows, error }, { data: allRows }, { data: events }, { data: config }] = await Promise.all([
     query,
-    supabase.from("diagnostic_results").select("stage, primary_bottleneck, email, purchase_intent, urgency"),
-    supabase.from("diagnostic_events").select("event, session_id"),
-    supabase.from("diagnostic_config").select("key, value"),
+    db.from("diagnostic_results").select("stage, primary_bottleneck, email, purchase_intent, urgency"),
+    db.from("diagnostic_events").select("event, session_id"),
+    db.from("diagnostic_config").select("key, value"),
   ]);
 
   // The migration is applied by hand, so the page explains itself rather than
@@ -104,8 +104,8 @@ export default async function AdminDiagnosticPage({
         <div className="rounded-lg border border-accent/40 bg-accent-soft p-6 max-w-[64ch]">
           <p className="font-semibold">The diagnostic tables aren&apos;t set up yet.</p>
           <p className="text-muted text-[0.92rem] mt-2 leading-relaxed">
-            Run <code className="text-accent">supabase/migrations/0003_diagnostic.sql</code> in the
-            Supabase SQL editor, then reload this page. The public diagnostic will start recording
+            Run <code className="text-accent">db/migrations/0003_diagnostic.sql</code> in the
+            database, then reload this page. The public diagnostic will start recording
             results as soon as it exists.
           </p>
         </div>

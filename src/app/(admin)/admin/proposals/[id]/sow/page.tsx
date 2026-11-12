@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { money } from "@/modules/pricing/data";
 import type { LineItem } from "@/modules/pricing/compute";
 import { phasesFor } from "@/modules/proposals/sow-phases";
@@ -18,9 +18,9 @@ const dateFmt: Intl.DateTimeFormatOptions = { month: "long", day: "numeric", yea
 export default async function ScopeOfWorkPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();
   const { id } = await params;
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
-  const { data: p } = await supabase.from("proposals").select("*").eq("id", id).single();
+  const { data: p } = await db.from("proposals").select("*").eq("id", id).single();
   if (!p) notFound();
 
   const items = (p.items as LineItem[]) ?? [];

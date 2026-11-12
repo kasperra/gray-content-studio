@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import type { Estimate } from "@/modules/pricing/compute";
 
@@ -47,7 +47,7 @@ export async function saveProposal(
   leadId?: string
 ): Promise<{ ok: boolean; id?: string; publicId?: string; message: string }> {
   await requireAdmin();
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
   if (!estimate.items.length) return { ok: false, message: "Select at least one service." };
   if (!details.clientName && !details.title)
@@ -56,7 +56,7 @@ export async function saveProposal(
   const row = { ...proposalRow(details, estimate), ...(leadId ? { lead_id: leadId } : {}) };
 
   if (existingId) {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from("proposals")
       .update(row)
       .eq("id", existingId)
@@ -67,7 +67,7 @@ export async function saveProposal(
     return { ok: true, id: data.id, publicId: data.public_id, message: "Proposal updated." };
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("proposals")
     .insert(row)
     .select("id, public_id")
@@ -79,15 +79,15 @@ export async function saveProposal(
 
 export async function setProposalStatus(id: string, status: "draft" | "sent" | "accepted" | "declined") {
   await requireAdmin();
-  const supabase = await createSupabaseServer();
-  await supabase.from("proposals").update({ status }).eq("id", id);
+  const db = await userDb();
+  await db.from("proposals").update({ status }).eq("id", id);
   revalidatePath("/admin/proposals");
 }
 
 export async function deleteProposal(id: string) {
   await requireAdmin();
-  const supabase = await createSupabaseServer();
-  await supabase.from("proposals").delete().eq("id", id);
+  const db = await userDb();
+  await db.from("proposals").delete().eq("id", id);
   revalidatePath("/admin/proposals");
 }
 
@@ -96,7 +96,7 @@ export async function setLeadStatus(
   status: "new" | "contacted" | "qualified" | "won" | "lost"
 ) {
   await requireAdmin();
-  const supabase = await createSupabaseServer();
-  await supabase.from("leads").update({ status }).eq("id", id);
+  const db = await userDb();
+  await db.from("leads").update({ status }).eq("id", id);
   revalidatePath("/admin");
 }

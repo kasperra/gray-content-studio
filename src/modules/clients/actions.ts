@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { randomBytes } from "crypto";
-import { createSupabaseServer, createSupabaseAdmin } from "@/lib/supabase/server";
+import { createUser, deleteUser } from "@/lib/auth/users";
+import { userDb, adminDb } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 
 export async function createClientRecord(input: {
@@ -14,8 +15,8 @@ export async function createClientRecord(input: {
 }): Promise<{ ok: boolean; id?: string; message: string }> {
   await requireAdmin();
   if (!input.company.trim()) return { ok: false, message: "Company name is required." };
-  const supabase = await createSupabaseServer();
-  const { data, error } = await supabase
+  const db = await userDb();
+  const { data, error } = await db
     .from("clients")
     .insert({
       company: input.company.trim(),
@@ -47,13 +48,13 @@ export async function deleteClient(
   await requireAdmin();
   if (!clientId) return { ok: false, message: "Missing client." };
 
-  const admin = createSupabaseAdmin();
+  const admin = adminDb();
 
   // 1. Remove any portal logins (auth users) linked to this client.
   const { data: logins } = await admin.from("profiles").select("id").eq("client_id", clientId);
   for (const login of logins ?? []) {
     // Best-effort: if a login is already gone, keep going.
-    await admin.auth.admin.deleteUser(login.id).catch(() => {});
+    await deleteUser(login.id).catch(() => {});
   }
 
   // 2. Delete the client — the database cascades the rest.
@@ -70,13 +71,13 @@ export async function convertLeadToClient(
   leadId: string
 ): Promise<{ ok: boolean; clientId?: string; message: string }> {
   await requireAdmin();
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
-  const { data: lead } = await supabase.from("leads").select("*").eq("id", leadId).single();
+  const { data: lead } = await db.from("leads").select("*").eq("id", leadId).single();
   if (!lead) return { ok: false, message: "Lead not found." };
   if (lead.client_id) return { ok: true, clientId: lead.client_id, message: "Lead is already linked to a client." };
 
-  const { data: client, error } = await supabase
+  const { data: client, error } = await db
     .from("clients")
     .insert({
       company: lead.company || lead.name,
@@ -88,12 +89,12 @@ export async function convertLeadToClient(
     .single();
   if (error || !client) return { ok: false, message: "Could not create the client." };
 
-  await supabase
+  await db
     .from("leads")
     .update({ client_id: client.id, status: lead.status === "new" ? "qualified" : lead.status })
     .eq("id", leadId);
 
-  await supabase.from("activities").insert({
+  await db.from("activities").insert({
     client_id: client.id,
     lead_id: leadId,
     kind: "system",
@@ -116,16 +117,16 @@ export async function createClientLogin(input: {
   const email = input.email.trim().toLowerCase();
   if (!email || !input.clientId) return { ok: false, message: "Client and email are required." };
 
-  const admin = createSupabaseAdmin();
+  const admin = adminDb();
   const tempPassword = `Gray-${randomBytes(6).toString("base64url")}`;
 
-  const { data: created, error } = await admin.auth.admin.createUser({
+  const created = await createUser({
     email,
     password: tempPassword,
-    email_confirm: true,
-    user_metadata: { name: input.name.trim() || email },
+    name: input.name.trim() || email,
   });
-  if (error || !created.user) {
+  const error = created.error ? { message: created.error } : null;
+  if (error || !created.id) {
     return {
       ok: false,
       message: error?.message?.includes("already")
@@ -138,7 +139,7 @@ export async function createClientLogin(input: {
   const { error: profileError } = await admin
     .from("profiles")
     .update({ client_id: input.clientId, role: "client", name: input.name.trim() || null })
-    .eq("id", created.user.id);
+    .eq("id", created.id);
   if (profileError) return { ok: false, message: "Login created but linking to the client failed." };
 
   revalidatePath(`/admin/clients/${input.clientId}`);

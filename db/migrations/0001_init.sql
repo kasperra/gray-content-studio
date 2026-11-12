@@ -1,5 +1,5 @@
 -- Gray Content Studio — Agency OS schema
--- Apply in the Supabase SQL Editor (or `supabase db push`).
+-- Applied automatically at container start by scripts/migrate.mjs.
 -- Covers all planned modules; Phase 1 actively uses: profiles, clients, leads, proposals.
 
 -- ========== Identity ==========
@@ -335,23 +335,10 @@ create policy "client reads templates" on content_templates for select
 create policy "admin all metric_snapshots" on metric_snapshots for all using (auth_role() = 'admin');
 create policy "client reads own metrics" on metric_snapshots for select using (client_id = auth_client_id());
 
--- ========== Storage buckets ==========
-
-insert into storage.buckets (id, name, public) values
-  ('deliverables', 'deliverables', false),
-  ('assets', 'assets', false),
-  ('documents', 'documents', false)
-on conflict (id) do nothing;
-
-create policy "admin storage all" on storage.objects for all
-  using (auth_role() = 'admin') with check (auth_role() = 'admin');
-
--- Clients read files under a folder named by their client_id: <client_id>/...
-create policy "client reads own files" on storage.objects for select
-  using (
-    bucket_id in ('deliverables', 'assets', 'documents')
-    and (storage.foldername(name))[1] = auth_client_id()::text
-  );
+-- ========== File storage ==========
+-- Files live in the S3-compatible store on the VPS (see src/lib/files). Access is
+-- checked in the app: admins read and write everything, clients read only paths
+-- under their own <client_id>/ prefix.
 
 -- ========== updated_at triggers ==========
 
