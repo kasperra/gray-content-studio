@@ -12,6 +12,8 @@ import type { NextConfig } from "next";
 const isProduction = process.env.VERCEL_ENV === "production";
 
 const nextConfig: NextConfig = {
+  // Self-contained server bundle for the Docker image (VPS / Coolify).
+  output: "standalone",
   async redirects() {
     if (!isProduction) return [];
     return [
