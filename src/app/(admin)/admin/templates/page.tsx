@@ -1,15 +1,15 @@
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { TemplateManager } from "./TemplateManager";
 
 export default async function TemplatesPage() {
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
   const [{ data: templates }, { data: clients }] = await Promise.all([
-    supabase
+    db
       .from("content_templates")
       .select("id, kind, name, body, client_id")
       .order("kind")
       .order("name"),
-    supabase.from("clients").select("id, company").order("company"),
+    db.from("clients").select("id, company").order("company"),
   ]);
 
   return (

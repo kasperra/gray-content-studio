@@ -58,8 +58,8 @@ export default function PrivacyPolicyPage() {
       <section>
         <h2>Service providers</h2>
         <p>
-          We use a small number of vendors to run this site: Supabase (database and file storage),
-          Vercel (hosting), Resend (transactional email), and Formspree (inquiry notifications).
+          We use a small number of vendors to run this site: our own server (database and file storage),
+          Hostinger (hosting), Resend (transactional email), and Formspree (inquiry notifications).
           They process data on our behalf and under their own security commitments.
         </p>
       </section>

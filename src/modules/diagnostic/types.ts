@@ -1,5 +1,5 @@
 /* Content Growth Diagnostic — shared types.
-   Kept free of React and Supabase imports so the scoring engine can run in a
+   Kept free of React and database imports so the scoring engine can run in a
    plain node process (see scoring.test.ts). */
 
 export const DIMENSIONS = [

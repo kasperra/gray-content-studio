@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { createSupabaseAdmin, supabaseConfigured } from "@/lib/supabase/server";
+import { adminDb, dbConfigured } from "@/lib/db";
 import { LEGAL } from "@/content/legal";
 import { envStr } from "@/lib/mail";
 import { campaignBySlug, CAMPAIGNS } from "./campaigns";
@@ -30,7 +30,7 @@ import {
 const CONFIG_TABLE = "diagnostic_config"; // shared site config store, see 0004/0006
 
 function connected() {
-  return supabaseConfigured() && Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return dbConfigured();
 }
 
 /** Outbound mail is opt-in on env, so skip the render entirely when it's off.
@@ -77,7 +77,7 @@ async function rateLimited(limit = 6, windowMs = 60_000): Promise<boolean> {
 async function readConfig(): Promise<Record<string, string>> {
   try {
     if (!connected()) return {};
-    const { data } = await createSupabaseAdmin().from(CONFIG_TABLE).select("key, value");
+    const { data } = await adminDb().from(CONFIG_TABLE).select("key, value");
     return Object.fromEntries((data ?? []).map((r) => [r.key, r.value]));
   } catch {
     return {};
@@ -154,7 +154,7 @@ export async function submitCampaignInquiry(
     };
   }
 
-  const admin = createSupabaseAdmin();
+  const admin = adminDb();
   const typeLabel = sessionTypeLabel(campaign, values.sessionType);
 
   const note = [
@@ -279,7 +279,7 @@ export async function saveCampaign(next: Campaign): Promise<{ ok: boolean; messa
         value: String(value).slice(0, 2000),
         updated_at: new Date().toISOString(),
       }));
-    const { error } = await createSupabaseAdmin().from(CONFIG_TABLE).upsert(rows);
+    const { error } = await adminDb().from(CONFIG_TABLE).upsert(rows);
     if (error) return { ok: false, message: "Could not save. Is migration 0006 applied?" };
   } catch {
     return { ok: false, message: "Could not save these changes." };
@@ -297,7 +297,7 @@ export async function deleteCampaignInquiry(id: string): Promise<{ ok: boolean; 
   await requireAdmin();
   if (!id) return { ok: false, message: "Missing inquiry." };
 
-  const { error } = await createSupabaseAdmin().from("campaign_inquiries").delete().eq("id", id);
+  const { error } = await adminDb().from("campaign_inquiries").delete().eq("id", id);
   if (error) return { ok: false, message: "Could not delete this inquiry." };
 
   revalidatePath("/admin/campaigns");

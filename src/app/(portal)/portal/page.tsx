@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { STAGES, stageIndex, stageLabel } from "@/modules/projects/stages";
 import { PortalHeader } from "./PortalHeader";
 
@@ -12,13 +12,13 @@ export const metadata: Metadata = {
 
 export default async function PortalPage() {
   const session = await requireUser();
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
   const [{ data: projects }, { data: activities }, { data: invoices }, { data: metrics }] = await Promise.all([
-    supabase.from("projects").select("id, title, stage, due_date").order("created_at", { ascending: false }),
-    supabase.from("activities").select("body, created_at").order("created_at", { ascending: false }).limit(8),
-    supabase.from("invoices").select("number, amount, status, due_date").order("created_at", { ascending: false }).limit(10),
-    supabase.from("metric_snapshots").select("metric, value, captured_on").eq("module", "marketing").order("captured_on", { ascending: false }).limit(6),
+    db.from("projects").select("id, title, stage, due_date").order("created_at", { ascending: false }),
+    db.from("activities").select("body, created_at").order("created_at", { ascending: false }).limit(8),
+    db.from("invoices").select("number, amount, status, due_date").order("created_at", { ascending: false }).limit(10),
+    db.from("metric_snapshots").select("metric, value, captured_on").eq("module", "marketing").order("captured_on", { ascending: false }).limit(6),
   ]);
 
   return (

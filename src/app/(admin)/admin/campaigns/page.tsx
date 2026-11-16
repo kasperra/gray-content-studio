@@ -1,4 +1,4 @@
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { getCampaigns, deleteCampaignInquiry, getMailRouting } from "@/modules/campaigns/actions";
 import { checkMailer } from "@/modules/diagnostic/email";
 import { formatDate, sessionTypeLabel } from "@/modules/campaigns/campaign";
@@ -38,9 +38,9 @@ const short = (iso: string) =>
   new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 export default async function AdminCampaignsPage() {
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
   const [{ data, error }, campaigns, mailer, routing] = await Promise.all([
-    supabase
+    db
       .from("campaign_inquiries")
       .select("*")
       .order("created_at", { ascending: false })
@@ -60,9 +60,9 @@ export default async function AdminCampaignsPage() {
           <p className="text-muted text-[0.92rem] mt-2 leading-relaxed">
             Run{" "}
             <code className="text-accent">
-              supabase/migrations/0006_campaign_inquiries.sql
+              db/migrations/0006_campaign_inquiries.sql
             </code>{" "}
-            in the Supabase SQL editor, then reload. The landing pages still render until then, but
+            in the database, then reload. The landing pages still render until then, but
             requests can&apos;t be saved.
           </p>
         </div>

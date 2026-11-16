@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createSupabaseBrowser } from "@/lib/supabase/client";
 import { getDownloadUrl } from "@/lib/storage";
+import { getDownloadUrls } from "@/modules/files/actions";
 import { KIND_ICONS, type AssetKind } from "@/modules/assets/kinds";
 import { updateAssetTags, deleteAsset } from "@/modules/assets/actions";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
@@ -39,16 +39,13 @@ export function AssetGrid({
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const supabase = createSupabaseBrowser();
       const images = assets.filter((a) => (a.kind === "photo" || a.kind === "logo" || a.kind === "graphic") && !thumbs[a.id]);
       if (!images.length) return;
-      const { data } = await supabase.storage
-        .from("assets")
-        .createSignedUrls(images.map((a) => a.storagePath), 60 * 60);
-      if (cancelled || !data) return;
+      const urls = await getDownloadUrls("assets", images.map((a) => a.storagePath), 60 * 60);
+      if (cancelled) return;
       const next: Record<string, string> = {};
-      data.forEach((d, i) => {
-        if (d.signedUrl) next[images[i].id] = d.signedUrl;
+      urls.forEach((u, i) => {
+        if (u) next[images[i].id] = u;
       });
       setThumbs((t) => ({ ...t, ...next }));
     })();

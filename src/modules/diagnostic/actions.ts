@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { createSupabaseAdmin, supabaseConfigured } from "@/lib/supabase/server";
+import { adminDb, dbConfigured } from "@/lib/db";
 import { diagnose, stageMeta } from "./scoring";
 import { QUESTIONS } from "./questions";
 import { DEFAULT_BOOKING_URL } from "./content";
@@ -59,11 +59,11 @@ export async function submitDiagnostic(answers: unknown): Promise<SubmitResult> 
   const result = diagnose(clean);
   const meta = stageMeta(result.stage);
 
-  if (!supabaseConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!dbConfigured()) {
     return { ok: false, message: "The diagnostic isn't connected to its database yet." };
   }
 
-  const admin = createSupabaseAdmin();
+  const admin = adminDb();
   const { data, error } = await admin
     .from("diagnostic_results")
     .insert({
@@ -102,13 +102,13 @@ export async function captureLead(
   if (!EMAIL_RE.test(email)) return { ok: false, message: "Please enter a valid email address." };
   if (!publicId || publicId.length > 64) return { ok: false, message: "Missing diagnosis." };
 
-  if (!supabaseConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!dbConfigured()) {
     return { ok: false, message: "The diagnostic isn't connected to its database yet." };
   }
 
   const trim = (v: string | undefined, max: number) => (v ?? "").trim().slice(0, max) || null;
 
-  const admin = createSupabaseAdmin();
+  const admin = adminDb();
 
   // Read first: we need the answers to build the email, and email_captured_at
   // tells us whether this is the first capture. Re-submitting the form must not
@@ -169,8 +169,8 @@ export async function track(
   opts: TrackOpts = {}
 ): Promise<void> {
   try {
-    if (!supabaseConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) return;
-    const admin = createSupabaseAdmin();
+    if (!dbConfigured()) return;
+    const admin = adminDb();
 
     let resultId: string | null = null;
     if (opts.resultPublicId) {
@@ -196,8 +196,8 @@ export async function track(
 /** Editable copy/links, with code defaults when the row (or table) is absent. */
 export async function getConfig(): Promise<Record<string, string>> {
   try {
-    if (!supabaseConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) return {};
-    const { data } = await createSupabaseAdmin().from("diagnostic_config").select("key, value");
+    if (!dbConfigured()) return {};
+    const { data } = await adminDb().from("diagnostic_config").select("key, value");
     return Object.fromEntries((data ?? []).map((r) => [r.key, r.value]));
   } catch {
     return {};
@@ -208,7 +208,7 @@ export async function saveConfig(entries: Record<string, string>): Promise<{ ok:
   const { requireAdmin } = await import("@/lib/auth");
   await requireAdmin();
   try {
-    const admin = createSupabaseAdmin();
+    const admin = adminDb();
     const rows = Object.entries(entries).map(([key, value]) => ({
       key,
       value: String(value).slice(0, 2000),
@@ -232,7 +232,7 @@ export async function deleteDiagnosticResult(
   if (!id) return { ok: false, message: "Missing lead." };
 
   try {
-    const { error } = await createSupabaseAdmin().from("diagnostic_results").delete().eq("id", id);
+    const { error } = await adminDb().from("diagnostic_results").delete().eq("id", id);
     if (error) return { ok: false, message: "Could not delete this lead." };
   } catch {
     return { ok: false, message: "Could not delete this lead." };
@@ -245,9 +245,9 @@ export async function deleteDiagnosticResult(
 /** Result lookup for the shareable URL. Service-role, because results carry
     lead data and are deliberately not readable under RLS. */
 export async function getResultByPublicId(publicId: string) {
-  if (!supabaseConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) return null;
+  if (!dbConfigured()) return null;
   if (!publicId || !/^[a-f0-9]{8,64}$/i.test(publicId)) return null;
-  const { data } = await createSupabaseAdmin()
+  const { data } = await adminDb()
     .from("diagnostic_results")
     .select("*")
     .eq("public_id", publicId)
@@ -277,11 +277,11 @@ export async function requestFollowUp(
   if (await rateLimited()) return { ok: false, message: "Too many attempts. Please try again shortly." };
   if (!publicId || !/^[a-f0-9]{8,64}$/i.test(publicId)) return { ok: false, message: "Missing diagnosis." };
 
-  if (!supabaseConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!dbConfigured()) {
     return { ok: false, message: "Not connected yet." };
   }
 
-  const admin = createSupabaseAdmin();
+  const admin = adminDb();
   const { data: row } = await admin
     .from("diagnostic_results")
     .select("*")

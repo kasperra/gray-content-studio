@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseAdmin, supabaseConfigured } from "@/lib/supabase/server";
+import { adminDb, dbConfigured } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import {
   parseDraft,
@@ -43,10 +43,10 @@ export async function submitLead(
   let dbOk = false;
   let emailOk = false;
 
-  // 1) CRM record in Supabase (service role — leads table is admin-only under RLS)
-  if (supabaseConfigured() && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  // 1) CRM record (owner connection — leads table is admin-only under RLS)
+  if (dbConfigured()) {
     try {
-      const admin = createSupabaseAdmin();
+      const admin = adminDb();
       const row = {
         name,
         email,
@@ -104,7 +104,7 @@ export async function deleteLead(
   await requireAdmin();
   if (!leadId) return { ok: false, message: "Missing lead." };
 
-  const admin = createSupabaseAdmin();
+  const admin = adminDb();
   const { error } = await admin.from("leads").delete().eq("id", leadId);
   if (error) return { ok: false, message: "Could not delete the lead." };
 

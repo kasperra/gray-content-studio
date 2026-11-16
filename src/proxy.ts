@@ -1,5 +1,8 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+
+// Keep in sync with SESSION_COOKIE in lib/auth/session.ts (not imported: that
+// module pulls in the database driver, which the proxy doesn't need).
+const SESSION_COOKIE = "gcs_session";
 
 const PROTECTED_PREFIXES = ["/admin", "/portal", "/review"];
 
@@ -28,8 +31,8 @@ export default async function proxy(request: NextRequest) {
 
   const needsAuth = PROTECTED_PREFIXES.some((p) => request.nextUrl.pathname.startsWith(p));
 
-  // Supabase not configured yet → route to setup notice instead of crashing
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  // Database not configured yet → route to setup notice instead of crashing
+  if (!process.env.DATABASE_URL) {
     if (needsAuth) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
@@ -39,37 +42,17 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  let response = NextResponse.next({ request });
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll: () => request.cookies.getAll(),
-        setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  // Refresh the session (required for SSR auth) and gate protected routes
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (needsAuth && !user) {
+  // Cheap gate: no session cookie → straight to login. The real check (is the
+  // session valid, what role) happens in requireUser()/requireAdmin() on every
+  // protected page, so a forged or expired cookie still gets bounced there.
+  if (needsAuth && !request.cookies.get(SESSION_COOKIE)?.value) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
 
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {

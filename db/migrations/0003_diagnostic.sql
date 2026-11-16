@@ -1,5 +1,5 @@
 -- Content Growth Diagnostic — lead capture, funnel analytics, and editable config.
--- Apply by hand in the Supabase SQL editor (same as the other migrations).
+-- Applied automatically at container start by scripts/migrate.mjs.
 
 create table if not exists diagnostic_results (
   id uuid primary key default gen_random_uuid(),

@@ -1,11 +1,11 @@
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { PipelineBoard } from "./PipelineBoard";
 
 export default async function CrmPage() {
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
   const [{ data: leads }, { data: notes }] = await Promise.all([
-    supabase.from("leads").select("*").order("created_at", { ascending: false }).limit(300),
-    supabase
+    db.from("leads").select("*").order("created_at", { ascending: false }).limit(300),
+    db
       .from("activities")
       .select("lead_id, body, kind, created_at")
       .not("lead_id", "is", null)

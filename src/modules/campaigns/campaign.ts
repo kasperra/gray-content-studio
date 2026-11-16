@@ -1,6 +1,6 @@
 /* Seasonal campaign landing pages — types, themes, and pure helpers.
 
-   Deliberately free of React and Supabase imports so the validation rules and
+   Deliberately free of React and database imports so the validation rules and
    the config round-trip can be exercised in a plain node process
    (see campaign.test.ts), and so the client bundle can import the copy.
 

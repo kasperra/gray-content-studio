@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 
 /** CSV of every completed diagnostic, one row per lead, shaped for import into
     a CRM or mail tool. Admin-gated; the query still runs under the caller's RLS. */
 export async function GET() {
   await requireAdmin();
 
-  const supabase = await createSupabaseServer();
-  const { data, error } = await supabase
+  const db = await userDb();
+  const { data, error } = await db
     .from("diagnostic_results")
     .select("*")
     .order("created_at", { ascending: false });

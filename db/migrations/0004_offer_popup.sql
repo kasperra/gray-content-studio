@@ -1,5 +1,5 @@
 -- First-visit offer popup — coupon issuance + marketing consent ledger.
--- Apply by hand in the Supabase SQL editor (same as the other migrations).
+-- Applied automatically at container start by scripts/migrate.mjs.
 
 -- The popup writes into the existing `leads` table so a claim lands on the same
 -- CRM board as every other inquiry. It only needs one column that wasn't there.

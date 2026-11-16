@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { SocialWorkspace } from "@/components/SocialWorkspace";
 import type { PostStatus } from "@/modules/social/platforms";
 
@@ -9,9 +9,9 @@ export default async function AdminSocialPage({
   searchParams: Promise<{ client?: string }>;
 }) {
   const { client: clientParam } = await searchParams;
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
-  const { data: clients } = await supabase.from("clients").select("id, company").order("company");
+  const { data: clients } = await db.from("clients").select("id, company").order("company");
   const selectedClient = clients?.find((c) => c.id === clientParam) ?? clients?.[0] ?? null;
 
   if (!selectedClient) {
@@ -26,18 +26,18 @@ export default async function AdminSocialPage({
   }
 
   const [{ data: posts }, { data: templates }, { data: assets }] = await Promise.all([
-    supabase
+    db
       .from("social_posts")
       .select("*")
       .eq("client_id", selectedClient.id)
       .order("created_at", { ascending: false })
       .limit(200),
-    supabase
+    db
       .from("content_templates")
       .select("id, kind, name, body")
       .or(`client_id.is.null,client_id.eq.${selectedClient.id}`)
       .order("name"),
-    supabase
+    db
       .from("assets")
       .select("name, storage_path")
       .eq("client_id", selectedClient.id)

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { userDb } from "@/lib/db";
 import { PortalHeader } from "../PortalHeader";
 import { AssetGrid } from "@/components/AssetGrid";
 
@@ -17,12 +17,12 @@ export default async function PortalAssetsPage({
 }) {
   const session = await requireUser();
   const { folder: folderParam } = await searchParams;
-  const supabase = await createSupabaseServer();
+  const db = await userDb();
 
   // RLS scopes both queries to the client's own rows
   const [{ data: folders }, { data: assets }] = await Promise.all([
-    supabase.from("asset_folders").select("id, name").order("name"),
-    supabase
+    db.from("asset_folders").select("id, name").order("name"),
+    db
       .from("assets")
       .select("id, name, kind, storage_path, tags, created_at, version_of, folder_id, client_id")
       .order("created_at", { ascending: false }),

@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createSupabaseBrowser } from "@/lib/supabase/client";
-import { uploadClientFile } from "@/lib/storage";
+import { uploadClientFile, getDownloadUrl } from "@/lib/storage";
 import {
   addReviewVersion,
   addReviewComment,
@@ -76,26 +75,23 @@ export function ReviewRoom({
   const videoUrl = shown?.url ?? null;
   const videoError = shown?.error ?? "";
 
-  // Signed playback URL (4h) — generated with the viewer's own session, so RLS applies
+  // Signed playback URL (4h) — only issued if the viewer may read this file
   useEffect(() => {
     if (!active) return;
     let cancelled = false;
     const versionId = active.id;
     const storagePath = active.storagePath;
     (async () => {
-      const supabase = createSupabaseBrowser();
-      const { data, error } = await supabase.storage
-        .from("deliverables")
-        .createSignedUrl(storagePath, 60 * 60 * 4);
+      const url = await getDownloadUrl("deliverables", storagePath, 60 * 60 * 4);
       if (cancelled) return;
       setPlayback(
-        error || !data
+        !url
           ? {
               versionId,
               url: null,
               error: "Could not load the video — please refresh or contact the studio.",
             }
-          : { versionId, url: data.signedUrl, error: "" }
+          : { versionId, url, error: "" }
       );
     })();
     return () => {

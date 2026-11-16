@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createSupabaseAdmin, supabaseConfigured } from "@/lib/supabase/server";
+import { adminDb, dbConfigured } from "@/lib/db";
 
 /* Funnel telemetry endpoint.
    Deliberately NOT a server action: Next serialises action POSTs per client, so
@@ -12,7 +12,7 @@ const EVENTS = new Set(["view", "start", "question", "complete", "capture", "cta
 
 export async function POST(request: NextRequest) {
   try {
-    if (!supabaseConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    if (!dbConfigured()) {
       return new NextResponse(null, { status: 204 });
     }
 
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const event = typeof body?.event === "string" ? body.event : "";
     if (!EVENTS.has(event)) return new NextResponse(null, { status: 204 });
 
-    const admin = createSupabaseAdmin();
+    const admin = adminDb();
 
     let resultId: string | null = null;
     const publicId = typeof body?.resultPublicId === "string" ? body.resultPublicId : "";
