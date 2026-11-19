@@ -5,7 +5,21 @@ import { BLOG_POSTS, INDUSTRIES } from "@/content/site";
 import { SITE_URL as BASE } from "@/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const statics = ["", "/work", "/pricing", "/event-coverage", "/process", "/blog", "/faq"].map((p) => ({
+  /* `/industries` is the hub for the eight vertical pages; `/diagnostic` is
+     indexable (only its /start and /results/[id] steps carry noindex) and sits
+     in both the nav and the footer, so leaving it out of the sitemap was a
+     contradictory signal. */
+  const statics = [
+    "",
+    "/work",
+    "/pricing",
+    "/industries",
+    "/event-coverage",
+    "/process",
+    "/blog",
+    "/faq",
+    "/diagnostic",
+  ].map((p) => ({
     url: `${BASE}${p}`,
     changeFrequency: "weekly" as const,
     priority: p === "" ? 1 : 0.8,

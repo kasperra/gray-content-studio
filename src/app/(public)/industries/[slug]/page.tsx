@@ -48,7 +48,12 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
     <>
       <section className="pt-48 pb-16">
         <Container>
-          <Eyebrow>Industries · {ind.name}</Eyebrow>
+          <Eyebrow>
+            <Link href="/industries" className="hover:text-ink transition-colors">
+              Industries
+            </Link>{" "}
+            · {ind.name}
+          </Eyebrow>
           <h1 className="font-display font-semibold leading-[1.08] tracking-[-0.015em] text-[clamp(2.4rem,6.5vw,5rem)] mt-4 max-w-[16ch]">
             {ind.headline}
           </h1>
@@ -101,6 +106,37 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
           </Container>
         </section>
       )}
+
+      {/* Sibling verticals. Each industry page used to be a leaf with one
+          inbound link, so most never got indexed; this makes the eight a mesh
+          that a crawler can walk in either direction. */}
+      <section className="py-20 border-t border-rule">
+        <Container>
+          <Reveal>
+            <Eyebrow>Other Industries</Eyebrow>
+          </Reveal>
+          <div className="flex flex-wrap gap-3 mt-7">
+            {INDUSTRIES.filter((i) => i.slug !== ind.slug).map((i, n) => (
+              <Reveal key={i.slug} delay={(n % 7) * 0.05}>
+                <Link
+                  href={`/industries/${i.slug}`}
+                  className="inline-block border border-rule rounded-full px-6 py-2.5 text-[0.9rem] text-muted hover:text-accent hover:border-accent transition-colors"
+                >
+                  {i.name}
+                </Link>
+              </Reveal>
+            ))}
+          </div>
+          <p className="mt-8">
+            <Link
+              href="/industries"
+              className="text-accent text-[0.9rem] font-semibold hover:underline underline-offset-4"
+            >
+              Compare all eight →
+            </Link>
+          </p>
+        </Container>
+      </section>
 
       <section className="text-center py-24 border-t border-rule bg-[radial-gradient(60%_80%_at_50%_100%,var(--color-accent-soft),transparent_60%)]">
         <Container>

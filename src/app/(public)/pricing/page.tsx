@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Container } from "@/components/sections";
 import { Eyebrow } from "@/components/Buttons";
 import { PricingPackages } from "./PricingPackages";
@@ -21,6 +22,17 @@ export default function PricingPage() {
           <p className="text-muted text-[1.06rem] max-w-136 mt-5">
             Our rate card is public. Start from a production package or an event coverage package
             below, or build your exact scope in the calculator — then send it to us as an inquiry.
+          </p>
+          {/* The rate card's companion read. The article sat on a single inbound
+              link from /blog and never got indexed; this is also the page a
+              visitor comparing quotes actually wants next. */}
+          <p className="mt-6">
+            <Link
+              href="/blog/how-much-does-video-production-cost"
+              className="text-accent text-[0.9rem] font-semibold hover:underline underline-offset-4"
+            >
+              Read the full breakdown: how much does video production actually cost? →
+            </Link>
           </p>
         </Container>
       </section>

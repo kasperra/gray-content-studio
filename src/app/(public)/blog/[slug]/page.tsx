@@ -54,6 +54,28 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               <p key={i}>{p}</p>
             ))}
           </div>
+          {/* Sibling articles — the only inbound link each post had was the
+              /blog index, which left the set too weakly linked to all get
+              indexed. */}
+          {BLOG_POSTS.filter((p) => p.slug !== post.slug).length > 0 && (
+            <div className="mt-14 pt-8 border-t border-rule">
+              <Eyebrow>Keep Reading</Eyebrow>
+              <ul className="mt-5 space-y-4">
+                {BLOG_POSTS.filter((p) => p.slug !== post.slug).map((p) => (
+                  <li key={p.slug}>
+                    <Link href={`/blog/${p.slug}`} className="group block">
+                      <span className="font-display text-[1.08rem] font-semibold transition-colors group-hover:text-accent">
+                        {p.title}
+                      </span>
+                      <span className="block text-muted text-[0.9rem] mt-1 leading-relaxed">
+                        {p.description}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="mt-14 pt-8 border-t border-rule flex flex-wrap items-center justify-between gap-6">
             <Link href="/blog" className="text-muted text-[0.9rem] hover:text-ink transition-colors">
               ← All articles

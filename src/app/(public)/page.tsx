@@ -176,6 +176,14 @@ export default async function HomePage() {
               </Reveal>
             ))}
           </div>
+          <p className="mt-8">
+            <Link
+              href="/industries"
+              className="text-accent text-[0.9rem] font-semibold hover:underline underline-offset-4"
+            >
+              Compare all eight industries →
+            </Link>
+          </p>
         </Container>
       </section>
 

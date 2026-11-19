@@ -34,7 +34,7 @@ const cols = [
       { href: "/diagnostic", label: "Content Diagnostic" },
       { href: "/blog", label: "Blog" },
       { href: "/faq", label: "FAQ" },
-      { href: "/industries/real-estate", label: "Industries" },
+      { href: "/industries", label: "Industries" },
     ],
   },
   {

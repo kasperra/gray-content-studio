@@ -3,12 +3,33 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CASE_STUDIES, getCaseStudy } from "@/content/case-studies";
-import { Container } from "@/components/sections";
+import { Container, WorkCard } from "@/components/sections";
 import { Eyebrow, ButtonGold } from "@/components/Buttons";
 import { Reveal } from "@/components/Reveal";
 
 export function generateStaticParams() {
   return CASE_STUDIES.map((c) => ({ slug: c.slug }));
+}
+
+/* Three sibling case studies for the "More work" rail.
+
+   Every case study used to be a leaf: its only inbound link was the /work grid,
+   so the thinner ones (ccwa, teddy) sat at a single internal link and Search
+   Console left them crawled-but-not-indexed. Walking the array from the current
+   entry — same category first, then straight on round the ring — gives each of
+   the fifteen several inbound links from its siblings, and is deterministic, so
+   the static HTML stays stable between builds. */
+function relatedCaseStudies(slug: string) {
+  const here = CASE_STUDIES.findIndex((c) => c.slug === slug);
+  if (here < 0) return [];
+  const ring = Array.from(
+    { length: CASE_STUDIES.length - 1 },
+    (_, n) => CASE_STUDIES[(here + 1 + n) % CASE_STUDIES.length],
+  );
+  const category = CASE_STUDIES[here].category;
+  const sameCategory = ring.filter((c) => c.category === category);
+  const rest = ring.filter((c) => c.category !== category);
+  return [...sameCategory, ...rest].slice(0, 3);
 }
 
 export async function generateMetadata({
@@ -28,6 +49,8 @@ export async function generateMetadata({
 export default async function CaseStudyPage({ params }: { params: Promise<{ slug: string }> }) {
   const cs = getCaseStudy((await params).slug);
   if (!cs) notFound();
+
+  const related = relatedCaseStudies(cs.slug);
 
   // Portfolio reels live at /video/<slug>.mp4 for the clients that have one.
   const VIDEO_SLUGS = new Set([
@@ -145,10 +168,28 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
         </Container>
       </section>
 
+      {related.length > 0 && (
+        <section className="py-20 border-t border-rule">
+          <Container>
+            <Reveal>
+              <Eyebrow>More Work</Eyebrow>
+            </Reveal>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+              {related.map((r, i) => (
+                <WorkCard key={r.slug} cs={r} delay={i * 0.08} />
+              ))}
+            </div>
+          </Container>
+        </section>
+      )}
+
       <section className="py-10 border-t border-rule">
         <Container className="flex justify-between items-center">
           <Link href="/work" className="text-muted text-[0.9rem] hover:text-ink transition-colors">
             ← All case studies
+          </Link>
+          <Link href="/industries" className="text-muted text-[0.9rem] hover:text-ink transition-colors">
+            Video for your industry →
           </Link>
         </Container>
       </section>
