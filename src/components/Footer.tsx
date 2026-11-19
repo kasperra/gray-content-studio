@@ -69,7 +69,13 @@ export function Footer() {
                 <p className="text-[0.72rem] font-semibold uppercase tracking-[0.2em] text-accent mb-3">{col.title}</p>
                 <ul className="space-y-2">
                   {col.links.map((l) => (
-                    <li key={l.href + l.label}>
+                    /* Label first, with a space. `l.href + l.label` built keys
+                       like "/pricingPricing", and a React key is serialised
+                       into the flight payload in the HTML, where Googlebot
+                       reads it as a URL and crawls it: Search Console logged
+                       /pricingPricing as a 404 found on the site. Anything
+                       path-shaped here becomes a real request. */
+                    <li key={`${l.label} ${l.href}`}>
                       <Link href={l.href} className="text-[0.85rem] text-muted hover:text-ink transition-colors">
                         {l.label}
                       </Link>
