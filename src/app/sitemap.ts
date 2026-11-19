@@ -5,10 +5,14 @@ import { BLOG_POSTS, INDUSTRIES } from "@/content/site";
 import { SITE_URL as BASE } from "@/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  /* `/industries` is the hub for the eight vertical pages; `/diagnostic` is
-     indexable (only its /start and /results/[id] steps carry noindex) and sits
-     in both the nav and the footer, so leaving it out of the sitemap was a
-     contradictory signal. */
+  /* `/industries` is the hub for the eight vertical pages.
+
+     `/diagnostic` is deliberately absent. It is served from its own subdomain
+     (proxy.ts rewrites diagnostic.* onto /diagnostic) and its page hardcodes
+     its canonical to https://diagnostic.graycontentstudio.co, so listing the
+     www copy here would put a URL in the sitemap that points its canonical at
+     a different host — asking Google to index a page that disclaims itself.
+     If the diagnostic ever needs a sitemap, it belongs on that subdomain. */
   const statics = [
     "",
     "/work",
@@ -18,7 +22,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/process",
     "/blog",
     "/faq",
-    "/diagnostic",
   ].map((p) => ({
     url: `${BASE}${p}`,
     changeFrequency: "weekly" as const,
