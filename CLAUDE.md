@@ -72,7 +72,9 @@ Each domain (`leads`, `proposals`, `clients`, `projects`, `crm`, `assets`, `soci
 
 ## Deploying
 
-Push to `main` → Coolify on the VPS builds the `Dockerfile` and restarts the container (migrations run first). Runtime env vars live in Coolify (`.env.example` documents them): `DATABASE_URL`, `AUTH_SECRET`, `S3_*`, `NEXT_PUBLIC_SITE_URL` (build-time too), and the optional mail ones. Backups: Coolify's nightly Postgres backup plus a nightly off-server copy of the database and files.
+Push to `main` → Coolify on the VPS builds the `Dockerfile` and restarts the container (migrations run first). That trigger is a GitHub push webhook pointing at Coolify's `/webhooks/source/github/events/manual`; **it is the only thing that starts a deploy.** Until 2026-11-19 the repo had no webhook at all, so a push did nothing and every deploy was a manual click — a commit sat on `main` for an hour looking deployed. If a push doesn't go live, check the repo's webhook deliveries first (`gh api repos/kasperra/gray-content-studio/hooks`), then Coolify's deployment list: a row with `is_webhook = false` means someone deployed by hand and the hook is broken again.
+
+Runtime env vars live in Coolify (`.env.example` documents them): `DATABASE_URL`, `AUTH_SECRET`, `S3_*`, `NEXT_PUBLIC_SITE_URL` (build-time too), and the optional mail ones. Backups: Coolify's nightly Postgres backup plus a nightly off-server copy of the database and files.
 
 `scripts/import-from-supabase.sh` and `scripts/copy-files-from-supabase.mjs` were the one-time move off the old hosted backend (database + logins, then files); kept for reference.
 
